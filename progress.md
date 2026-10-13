@@ -15,3 +15,4 @@
 - PR #3 fusionnée, Pages redéployé : 7 exercices en ligne.
 - Itération 6 (branche `fix/inline-sprites`) : sprites embarqués dans le bundle (WebP 192 px en data URI, 2,7 Mo) pour supprimer les images vides dues aux chargements distants ; script de données capable de repartir du bundle commité si l'API Tyradex est injoignable.
 - Itération 7 (branche `feat/pokemon-filters`, empilée sur `fix/inline-sprites`) : filtre par types (18 badges cochables, Tous/Aucun) et interrupteur « Inclure les légendaires », appliqués au vivier de tous les exercices avec complément automatique à 12 Pokémon minimum. Flag `legendary` ajouté au bundle (11 Pokémon gen 1-2). Noms d'attaques Dragon et Fée raccourcis (débordement des cartes).
+- PR #4 et #6 fusionnées (sprites embarqués, filtres, liens de pied de page), Pages redéployé.
