@@ -8,3 +8,4 @@
 - Dépôt git initialisé et poussé sur `hamzdi/pokexo` (privé).
 - Itération 3 (branche `feat/scaffold`) : dépôt passé en public, GitHub Pages activé (source Actions), squelette Vite + TypeScript, bundle Tyradex gen 1-2 (251 Pokémon), générateur « Combat par manches » pour CP/CE1 P1–P5 avec corrigé, aperçu A4 et impression PDF, 17 tests GIVEN/WHEN/THEN verts, rendu vérifié dans un navigateur.
 - Reste : fusionner la PR pour déclencher le premier déploiement Pages, intégrer les maquettes Claude Design, ajouter les autres exercices.
+- PR #1 fusionnée sur `main`, workflow Pages réussi, application en ligne sur https://hamzdi.github.io/pokexo/.
