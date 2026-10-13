@@ -39,8 +39,8 @@ export const COMBAT_RULES: Record<Level, Record<Period, CombatRules>> = {
     1: { ...base, pvMin: 6, pvMax: 9, damageMin: 1, damageMax: 3, rounds: 2 },
     2: { ...base, pvMin: 12, pvMax: 20, damageMin: 2, damageMax: 5, rounds: 3 },
     3: { ...base, pvMin: 20, pvMax: 39, damageMin: 3, damageMax: 9, rounds: 3 },
-    4: { ...base, pvMin: 40, pvMax: 79, damageMin: 5, damageMax: 20, rounds: 4 },
-    5: { ...base, pvMin: 60, pvMax: 100, damageMin: 5, damageMax: 25, rounds: 4 },
+    4: { ...base, pvMin: 40, pvMax: 79, damageMin: 2, damageMax: 20, rounds: 4 },
+    5: { ...base, pvMin: 60, pvMax: 100, damageMin: 2, damageMax: 30, rounds: 4 },
   },
   CE1: {
     1: { ...base, pvMin: 50, pvMax: 100, damageMin: 10, damageMax: 30, rounds: 3, allowBorrow: true },
@@ -110,7 +110,7 @@ export function needsBorrow(minuend: number, subtrahend: number): boolean {
 }
 
 /** Map a real Tyradex HP stat (roughly 20-130 for gen 1-2) onto the rules' PV range. */
-export function scaleHp(hp: number, rules: CombatRules): number {
+export function scaleHp(hp: number, rules: { pvMin: number; pvMax: number }): number {
   const lo = 20;
   const hi = 130;
   const t = Math.min(1, Math.max(0, (hp - lo) / (hi - lo)));

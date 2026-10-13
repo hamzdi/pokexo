@@ -118,3 +118,29 @@ describe('generateCombat', () => {
     });
   });
 });
+
+describe('generateCombat moves', () => {
+  it('uses only the two moves printed on the attacker card', () => {
+    for (const level of LEVELS) {
+      for (const period of PERIODS) {
+        // GIVEN exercises for this level and period
+        every(level, period, (ex) => {
+          // WHEN inspecting each attack
+          for (const row of ex.rows) {
+            if (row.kind !== 'attack') continue;
+            const moves = ex.fighters[row.attacker].moves;
+            // THEN the move name and base damage match one printed move
+            expect(moves.some((move) => move.name === row.attackName && move.damage === row.baseDamage)).toBe(true);
+          }
+          for (const fighter of ex.fighters) {
+            expect(fighter.moves[0].damage).not.toBe(fighter.moves[1].damage);
+            for (const move of fighter.moves) {
+              expect(move.damage).toBeGreaterThanOrEqual(ex.rules.damageMin);
+              expect(move.damage).toBeLessThanOrEqual(ex.rules.damageMax);
+            }
+          }
+        });
+      }
+    }
+  });
+});

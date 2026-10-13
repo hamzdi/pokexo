@@ -22,7 +22,7 @@ describe('renderCombatSheet', () => {
     const markup = renderCombatSheet(ex, { answerKey: false });
     // WHEN rendered
     // THEN no answer box is filled and both Pokémon appear
-    expect(markup).not.toContain('answer--filled');
+    expect(markup).not.toContain('box--filled');
     expect(markup).toContain(ex.fighters[0].pokemon.name);
     expect(markup).toContain(ex.fighters[1].pokemon.name);
   });
@@ -33,6 +33,6 @@ describe('renderCombatSheet', () => {
     // WHEN rendered
     // THEN each attack row shows its remaining PV and the winner is printed
     for (const row of ex.rows) if (row.kind === 'attack' && row.pvAfter > 0) expect(markup).toContain(`>${row.pvAfter}<`);
-    expect(markup).toContain('Corrigé');
+    expect(markup).toContain('CORRIGÉ');
   });
 });
