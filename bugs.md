@@ -10,3 +10,6 @@ Les cellules « PV restants » (étiquette au-dessus de la case) mesuraient 16,7
 
 ## 2026-10-13 — Retenue possible en CP avec les attaques fixes (corrigé)
 Les dégâts minimaux CP P4–P5 (5) rendaient impossible le « sans retenue » sur deux coups, et une grosse attaque pouvait consommer les unités nécessaires aux coups suivants. Détecté par `tests/combat.test.ts`.
+
+## 2026-10-13 — Débordement de la manche mystère en CP P4–P5 (corrigé)
+Le paragraphe de règle supplémentaire faisait déborder les fiches CP déjà denses. Règle fusionnée dans la liste, classe `sheet--mystery` dédiée, combat CP légèrement compacté. Vérifié par balayage de 1 400 fiches.

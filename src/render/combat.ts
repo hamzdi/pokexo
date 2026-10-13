@@ -14,15 +14,32 @@ export interface SheetOptions {
   studentName?: string;
 }
 
+/** Mystery variant: remaining PV are printed, the damage of these rounds is hidden. */
+export interface MysterySheetOptions extends SheetOptions {
+  hiddenRounds: readonly number[];
+}
+
 function answerBox(value: number | string, options: SheetOptions, extraClass = ''): Fragment {
   return box(value, options.answerKey, extraClass);
 }
 
-function renderAttackRow(row: AttackRow, ex: CombatExercise, options: SheetOptions): Fragment {
+function plainPv(pvAfter: number): Fragment {
+  return html`<strong class="pv-plain">${pvAfter === 0 ? '0 — KO !' : pvAfter}</strong>`;
+}
+
+function renderAttackRow(row: AttackRow, ex: CombatExercise, options: SheetOptions, hidden?: readonly number[]): Fragment {
   const attacker = ex.fighters[row.attacker];
   const defender = ex.fighters[row.defender];
-  const damageCell =
-    row.multiplier === 2 ? html`${row.baseDamage} × 2 = ${answerBox(row.damage, options, 'box--sm')}` : html`${row.damage}`;
+  let damageCell: Fragment;
+  if (hidden) {
+    damageCell = hidden.includes(row.round)
+      ? answerBox(row.damage, options, 'box--sm')
+      : row.multiplier === 2
+        ? html`${row.baseDamage} × 2 = ${row.damage}`
+        : html`${row.damage}`;
+  } else {
+    damageCell = row.multiplier === 2 ? html`${row.baseDamage} × 2 = ${answerBox(row.damage, options, 'box--sm')}` : html`${row.damage}`;
+  }
   return html`
     <tr class="row-attack">
       <td class="col-round">${row.round}</td>
@@ -33,12 +50,12 @@ function renderAttackRow(row: AttackRow, ex: CombatExercise, options: SheetOptio
       <td class="col-damage">${damageCell}</td>
       <td class="col-pv">
         <span class="col-pv__who">${defender.pokemon.name}</span>
-        ${answerBox(row.pvAfter === 0 ? '0 — KO !' : row.pvAfter, options)}
+        ${hidden ? plainPv(row.pvAfter) : answerBox(row.pvAfter === 0 ? '0 — KO !' : row.pvAfter, options)}
       </td>
     </tr>`;
 }
 
-function renderPotionRow(row: PotionRow, ex: CombatExercise, options: SheetOptions): Fragment {
+function renderPotionRow(row: PotionRow, ex: CombatExercise, options: SheetOptions, hidden?: readonly number[]): Fragment {
   const fighter = ex.fighters[row.fighter];
   return html`
     <tr class="row-potion">
@@ -48,12 +65,12 @@ function renderPotionRow(row: PotionRow, ex: CombatExercise, options: SheetOptio
       </td>
       <td class="col-pv">
         <span class="col-pv__who">${fighter.pokemon.name}</span>
-        ${answerBox(row.pvAfter, options)}
+        ${hidden ? plainPv(row.pvAfter) : answerBox(row.pvAfter, options)}
       </td>
     </tr>`;
 }
 
-function renderRules(ex: CombatExercise): Fragment {
+function renderRules(ex: CombatExercise, hidden?: readonly number[]): Fragment {
   const lines = [
     'Chaque Pokémon a des <strong>PV</strong> (points de vie) et deux attaques.',
     'Quand il reçoit une attaque, il perd autant de PV que les <strong>dégâts</strong> écrits sur la carte.',
@@ -61,15 +78,16 @@ function renderRules(ex: CombatExercise): Fragment {
   ];
   if (ex.rules.superEffective) lines.push("Si l'attaque est <strong>super efficace</strong>, les dégâts sont doublés (× 2).");
   if (ex.rules.potions) lines.push('Une <strong>potion</strong> redonne des PV.');
+  if (hidden) lines.push('<strong>Manche mystère :</strong> les PV restants sont écrits, retrouve les dégâts (PV avant − PV après).');
   return html`<ul class="rules">${lines.map((line) => html`<li>${raw(line)}</li>`)}</ul>`;
 }
 
-export function renderCombatSheet(ex: CombatExercise, options: SheetOptions): string {
+export function renderCombatSheet(ex: CombatExercise, options: SheetOptions, hidden?: readonly number[]): string {
   const [a, b] = ex.fighters;
   const winnerName = ex.winner === null ? 'Égalité' : ex.fighters[ex.winner].pokemon.name;
   const gap = Math.abs(ex.finalPv[0] - ex.finalPv[1]);
   const body = html`
-      ${renderRules(ex)}
+      ${renderRules(ex, hidden)}
 
       <div class="arena">
         ${renderCard({ pokemon: a.pokemon, pv: a.pv, moves: a.moves, role: ex.first === 0 ? 'Attaque en premier' : 'Attaque en second' })}
@@ -88,7 +106,7 @@ export function renderCombatSheet(ex: CombatExercise, options: SheetOptions): st
           </tr>
         </thead>
         <tbody>
-          ${ex.rows.map((row) => (row.kind === 'attack' ? renderAttackRow(row, ex, options) : renderPotionRow(row, ex, options)))}
+          ${ex.rows.map((row) => (row.kind === 'attack' ? renderAttackRow(row, ex, options, hidden) : renderPotionRow(row, ex, options, hidden)))}
         </tbody>
       </table>
 
@@ -97,16 +115,22 @@ export function renderCombatSheet(ex: CombatExercise, options: SheetOptions): st
         ${ex.rules.askGap ? html`<p>Écart de PV à la fin ? ${answerBox(gap, options)}</p>` : ''}
       </div>`;
   return renderSheet({
-    title: 'Combat Pokémon',
+    title: hidden ? 'Manche mystère' : 'Combat Pokémon',
     subject: 'Mathématiques',
     level: ex.level,
     period: ex.period,
     seed: ex.seed,
-    modifier: 'combat',
+    modifier: hidden ? 'mystery' : 'combat',
     answerKey: options.answerKey,
     studentName: options.studentName,
     picto: 'calcule',
-    consigne: 'Lis les règles, regarde les deux cartes, puis calcule les PV restants après chaque manche.',
+    consigne: hidden
+      ? 'Lis les règles et regarde les cartes. Retrouve les dégâts cachés de chaque manche mystère.'
+      : 'Lis les règles, regarde les deux cartes, puis calcule les PV restants après chaque manche.',
     body,
   });
+}
+
+export function renderMysterySheet(ex: CombatExercise, options: MysterySheetOptions): string {
+  return renderCombatSheet(ex, options, options.hiddenRounds);
 }
