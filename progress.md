@@ -17,3 +17,4 @@
 - Itération 7 (branche `feat/pokemon-filters`, empilée sur `fix/inline-sprites`) : filtre par types (18 badges cochables, Tous/Aucun) et interrupteur « Inclure les légendaires », appliqués au vivier de tous les exercices avec complément automatique à 12 Pokémon minimum. Flag `legendary` ajouté au bundle (11 Pokémon gen 1-2). Noms d'attaques Dragon et Fée raccourcis (débordement des cartes).
 - PR #4 et #6 fusionnées (sprites embarqués, filtres, liens de pied de page), Pages redéployé.
 - Itération 8 (branche `feat/real-pv`) : PV réels Tyradex dès le CP P3 (plafonds 59 / 79 / 99 puis 100, 200, 255 en CE1), PV fixes par Pokémon et période en CP P1-P2 (sans ajustement ni aléa), paires de combat filtrées sur leur faisabilité sans retenue, dégâts en dizaines entières en CP P3-P5, comparaison sans aléa, mention « PV adaptés au niveau » sur les fiches CP P1-P2. 45 tests verts.
+- PR #7 fusionnée (PV réels dès CP P3, PV fixes, mode légendaires exclusif), Pages redéployé.
