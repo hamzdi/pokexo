@@ -32,3 +32,15 @@ Vite + Vitest, aucun framework UI : les fiches sont des chaînes HTML générée
 
 ## 2026-10-13 — Règles du combat par niveau/période dans un tableau unique
 `COMBAT_RULES[level][period]` fixe PV, dégâts, manches, retenue autorisée/obligatoire, bonus ×2, potion et question d'écart. En CP, les PV sont ajustés pour qu'aucune soustraction n'exige de retenue. Les PV pédagogiques dérivent des HP réels (ordre conservé, valeurs rééchelonnées).
+
+## 2026-10-13 — Maquettes Claude Design non reprises
+Le canevas Claude Design (charte, composants, gabarits A4) a été lu mais Hamza préfère la mise en page déjà implémentée, jugée plus claire. On garde les classes et le style actuels ; la maquette reste disponible comme source d'inspiration ponctuelle (polices, pictos, lignage Seyès).
+
+## 2026-10-13 — Charte Claude Design adoptée, sauf le tableau de manches
+Après lecture du canevas, Hamza retient la maquette dans son ensemble (charte, cartes, lignes de comparaison, Seyès, écran) et conserve le tableau de manches de la première version, jugé plus clair. `src/pokexo.css` est copié tel quel depuis la maquette ; les ajouts et surcharges vivent dans `src/style.css`.
+
+## 2026-10-13 — Deux attaques à dégâts fixes par Pokémon
+Les cartes listent deux attaques et leurs dégâts ; chaque manche réutilise l'une d'elles. En CP, la première attaque est assez petite pour que ses répétitions ne franchissent jamais une dizaine, la seconde est une dizaine entière à partir de P4 ; le choix de l'attaque préserve les unités nécessaires aux coups suivants. Le premier coup reçu par un Pokémon ne le met jamais KO.
+
+## 2026-10-13 — Graines par exercice
+Chaque générateur dérive sa graine de `"<exercice>:<numéro>"`, donc un même numéro de fiche produit des contenus différents selon l'exercice tout en restant reproductible.

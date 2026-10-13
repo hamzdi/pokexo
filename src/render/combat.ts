@@ -4,8 +4,9 @@
  * The same template renders the student sheet and the answer key: with
  * `answerKey` enabled, every answer box is filled instead of left blank.
  */
-import { typeSlug } from '../domain/attacks.ts';
-import type { AttackRow, CombatExercise, Fighter, PotionRow } from '../domain/combat.ts';
+import type { AttackRow, CombatExercise, PotionRow } from '../domain/combat.ts';
+import { renderCard } from './card.ts';
+import { answerBox as box, renderSheet } from './frame.ts';
 import { html, raw, type Fragment } from './html.ts';
 
 export interface SheetOptions {
@@ -14,42 +15,21 @@ export interface SheetOptions {
 }
 
 function answerBox(value: number | string, options: SheetOptions, extraClass = ''): Fragment {
-  return options.answerKey
-    ? html`<span class="answer answer--filled ${extraClass}">${value}</span>`
-    : html`<span class="answer ${extraClass}"></span>`;
-}
-
-function renderCard(fighter: Fighter): Fragment {
-  const type = fighter.attack.type;
-  return html`
-    <div class="card type-${typeSlug(type)}">
-      <div class="card__header">
-        <span class="card__name">${fighter.pokemon.name}</span>
-        <span class="card__pv">${fighter.pv} <small>PV</small></span>
-      </div>
-      <img class="card__sprite" src="${fighter.pokemon.sprite}" alt="${fighter.pokemon.name}" />
-      <div class="card__type"><span class="badge">${type}</span></div>
-      <div class="card__attack">
-        <span class="card__attack-name">${fighter.attack.name}</span>
-      </div>
-    </div>`;
+  return box(value, options.answerKey, extraClass);
 }
 
 function renderAttackRow(row: AttackRow, ex: CombatExercise, options: SheetOptions): Fragment {
   const attacker = ex.fighters[row.attacker];
   const defender = ex.fighters[row.defender];
   const damageCell =
-    row.multiplier === 2
-      ? html`<span class="super">Super efficace !</span> ${row.baseDamage} × 2 = ${answerBox(row.damage, options, 'answer--small')}`
-      : html`${row.damage}`;
+    row.multiplier === 2 ? html`${row.baseDamage} × 2 = ${answerBox(row.damage, options, 'box--sm')}` : html`${row.damage}`;
   return html`
     <tr class="row-attack">
       <td class="col-round">${row.round}</td>
       <td class="col-attacker">
-        <img class="mini" src="${attacker.pokemon.sprite}" alt="" />
-        <span>${attacker.pokemon.name}</span>
+        <span class="who"><img class="who__sprite" src="${attacker.pokemon.sprite}" alt="" />${attacker.pokemon.name}</span>
       </td>
-      <td class="col-attack">${row.attackName}</td>
+      <td class="col-attack">${row.attackName}${row.multiplier === 2 ? html`<span class="super">Super efficace !</span>` : ''}</td>
       <td class="col-damage">${damageCell}</td>
       <td class="col-pv">
         <span class="col-pv__who">${defender.pokemon.name}</span>
@@ -75,11 +55,11 @@ function renderPotionRow(row: PotionRow, ex: CombatExercise, options: SheetOptio
 
 function renderRules(ex: CombatExercise): Fragment {
   const lines = [
-    'Chaque Pokémon a des <strong>PV</strong> (points de vie).',
-    'Quand il reçoit une attaque, il perd autant de PV que les <strong>dégâts</strong>.',
+    'Chaque Pokémon a des <strong>PV</strong> (points de vie) et deux attaques.',
+    'Quand il reçoit une attaque, il perd autant de PV que les <strong>dégâts</strong> écrits sur la carte.',
     "S'il arrive à 0 PV, il est <strong>KO</strong> et le combat s'arrête.",
   ];
-  if (ex.rules.superEffective) lines.push('Si l\'attaque est <strong>super efficace</strong>, les dégâts sont doublés (× 2).');
+  if (ex.rules.superEffective) lines.push("Si l'attaque est <strong>super efficace</strong>, les dégâts sont doublés (× 2).");
   if (ex.rules.potions) lines.push('Une <strong>potion</strong> redonne des PV.');
   return html`<ul class="rules">${lines.map((line) => html`<li>${raw(line)}</li>`)}</ul>`;
 }
@@ -88,30 +68,13 @@ export function renderCombatSheet(ex: CombatExercise, options: SheetOptions): st
   const [a, b] = ex.fighters;
   const winnerName = ex.winner === null ? 'Égalité' : ex.fighters[ex.winner].pokemon.name;
   const gap = Math.abs(ex.finalPv[0] - ex.finalPv[1]);
-  return html`
-    <section class="page sheet sheet--combat ${options.answerKey ? 'sheet--answer-key' : ''}">
-      <header class="sheet__header">
-        <div>
-          <h1 class="sheet__title">Combat Pokémon ${options.answerKey ? raw('<span class="tag">Corrigé</span>') : ''}</h1>
-          <p class="sheet__meta">Mathématiques · ${ex.level} · Période ${ex.period} · n° ${ex.seed}</p>
-        </div>
-        <div class="sheet__identity">
-          <span>Prénom : <span class="line">${options.studentName ?? ''}</span></span>
-          <span>Date : <span class="line"></span></span>
-        </div>
-      </header>
-
-      <div class="consigne">
-        <span class="picto" aria-hidden="true">🧮</span>
-        <p>Lis les règles, regarde les deux cartes, puis calcule les PV restants après chaque manche.</p>
-      </div>
-
+  const body = html`
       ${renderRules(ex)}
 
       <div class="arena">
-        ${renderCard(a)}
-        <span class="versus">VS</span>
-        ${renderCard(b)}
+        ${renderCard({ pokemon: a.pokemon, pv: a.pv, moves: a.moves, role: ex.first === 0 ? 'Attaque en premier' : 'Attaque en second' })}
+        <span class="vs">VS</span>
+        ${renderCard({ pokemon: b.pokemon, pv: b.pv, moves: b.moves, role: ex.first === 1 ? 'Attaque en premier' : 'Attaque en second' })}
       </div>
 
       <table class="rounds">
@@ -130,13 +93,20 @@ export function renderCombatSheet(ex: CombatExercise, options: SheetOptions): st
       </table>
 
       <div class="questions">
-        <p>Qui a gagné le combat ? ${answerBox(winnerName, options, 'answer--wide')}</p>
-        ${ex.rules.askGap ? html`<p>Combien de PV d'écart à la fin ? ${answerBox(gap, options)}</p>` : ''}
-      </div>
-
-      <footer class="sheet__footer">
-        <span>Pokexo</span>
-        <span>Données Pokémon : Tyradex (tyradex.app)</span>
-      </footer>
-    </section>`.html;
+        <p>Qui a gagné le combat ? ${answerBox(winnerName, options, 'box--wide')}</p>
+        ${ex.rules.askGap ? html`<p>Écart de PV à la fin ? ${answerBox(gap, options)}</p>` : ''}
+      </div>`;
+  return renderSheet({
+    title: 'Combat Pokémon',
+    subject: 'Mathématiques',
+    level: ex.level,
+    period: ex.period,
+    seed: ex.seed,
+    modifier: 'combat',
+    answerKey: options.answerKey,
+    studentName: options.studentName,
+    picto: 'calcule',
+    consigne: 'Lis les règles, regarde les deux cartes, puis calcule les PV restants après chaque manche.',
+    body,
+  });
 }

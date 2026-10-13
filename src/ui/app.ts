@@ -1,17 +1,14 @@
 /**
- * Single-screen generator UI: parameters on the left, A4 preview in the centre,
- * print button to produce the PDF through the browser.
+ * Generator screen (shell from the Claude Design mockup): settings panel on the
+ * left, action bar and scaled A4 previews on the right, browser print for PDF.
  */
-import { generateCombat } from '../domain/combat.ts';
-import { POKEDEX } from '../domain/pokedex.ts';
 import { seedFromString } from '../domain/rng.ts';
 import { LEVELS, PERIODS, type Level, type Period } from '../domain/types.ts';
-import { renderCombatSheet } from '../render/combat.ts';
-import { html } from '../render/html.ts';
+import { EXERCISES } from '../exercises.ts';
+import { html, raw, type Fragment } from '../render/html.ts';
 
 interface ExerciseChoice {
-  id: 'combat';
-  label: string;
+  id: string;
   enabled: boolean;
   count: number;
 }
@@ -25,14 +22,23 @@ interface State {
   exercises: ExerciseChoice[];
 }
 
+const MAX_COUNT = 6;
+
 const state: State = {
   level: 'CP',
   period: 1,
-  seed: String(Math.floor(Math.random() * 9000) + 1000),
+  seed: String(1000 + Math.floor(Math.random() * 9000)),
   studentName: '',
   answerKey: true,
-  exercises: [{ id: 'combat', label: 'Combat par manches', enabled: true, count: 1 }],
+  exercises: EXERCISES.map((exercise) => ({ id: exercise.id, enabled: true, count: 1 })),
 };
+
+const ICON_MINUS = raw('<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>');
+const ICON_PLUS = raw('<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>');
+const ICON_DICE = raw('<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3.5"></rect><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="15" cy="15" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="15" cy="9" r="1.3" fill="currentColor" stroke="none"></circle><circle cx="9" cy="15" r="1.3" fill="currentColor" stroke="none"></circle></svg>');
+const ICON_REFRESH = raw('<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"></path><path d="M20 4v5h-5"></path></svg>');
+const ICON_PRINT = raw('<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M7 9V3.5h10V9"></path><path d="M7 17H4.5a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 4.5 9h15a1.5 1.5 0 0 1 1.5 1.5v5a1.5 1.5 0 0 1-1.5 1.5H17"></path><path d="M7 14h10v6.5H7z"></path></svg>');
+const LOGO = raw('<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#2B4FB8"></rect><rect x="10" y="6" width="14" height="18" rx="2" fill="none" stroke="#fff" stroke-width="2.2"></rect><path d="M7 10v14a2 2 0 0 0 2 2h11" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path><path d="M14 12h6M14 16h6M14 20h3" stroke="#fff" stroke-width="2" stroke-linecap="round"></path></svg>');
 
 /** Accept a plain number or any text as seed; text is hashed. */
 function baseSeed(): number {
@@ -40,113 +46,189 @@ function baseSeed(): number {
   return /^\d+$/.test(trimmed) ? Number(trimmed) : seedFromString(trimmed || 'pokexo');
 }
 
-function renderPages(): string {
-  const sheets: string[] = [];
-  const keys: string[] = [];
-  for (const exercise of state.exercises) {
-    if (!exercise.enabled) continue;
-    for (let i = 0; i < exercise.count; i++) {
-      const seed = (baseSeed() + i) % 100000;
-      const ex = generateCombat({ level: state.level, period: state.period, seed, pokedex: POKEDEX });
-      sheets.push(renderCombatSheet(ex, { answerKey: false, studentName: state.studentName }));
-      if (state.answerKey) keys.push(renderCombatSheet(ex, { answerKey: true }));
-    }
-  }
-  if (sheets.length === 0) return html`<p class="empty">Coche au moins un exercice.</p>`.html;
-  return sheets.join('') + keys.join('');
+interface Page {
+  label: string;
+  answerKey: boolean;
+  markup: string;
 }
 
-function renderControls(): string {
+function buildPages(): Page[] {
+  const sheets: Page[] = [];
+  const keys: Page[] = [];
+  for (const choice of state.exercises) {
+    const definition = EXERCISES.find((exercise) => exercise.id === choice.id);
+    if (!choice.enabled || !definition) continue;
+    for (let i = 0; i < choice.count; i++) {
+      const seed = (baseSeed() + i) % 100000;
+      const rendered = definition.render(state.level, state.period, seed, { studentName: state.studentName });
+      sheets.push({ label: definition.label, answerKey: false, markup: rendered.sheet });
+      if (state.answerKey) keys.push({ label: definition.label, answerKey: true, markup: rendered.answerKey });
+    }
+  }
+  return [...sheets, ...keys];
+}
+
+function renderDesk(pages: Page[]): string {
+  if (pages.length === 0) return html`<p class="empty">Coche au moins un exercice.</p>`.html;
+  return pages
+    .map(
+      (page, index) => html`
+        <figure class="app-page" style="margin: 0">
+          <figcaption class="app-page__label">
+            <span class="app-page__num">${index + 1}</span>${page.label}
+            ${page.answerKey ? html`<span class="app-page__tag">Corrigé</span>` : ''}
+          </figcaption>
+          <div class="app-page__frame app-page__frame--62"><div class="app-page__scale app-page__scale--62">${raw(page.markup)}</div></div>
+        </figure>`.html,
+    )
+    .join('');
+}
+
+function seg<T extends string | number>(name: string, values: readonly T[], current: T, label: (v: T) => string): Fragment {
   return html`
-    <h1 class="brand">Pokexo</h1>
-    <p class="brand__sub">Fiches d'exercices CP · CE1</p>
-
-    <fieldset>
-      <legend>Niveau</legend>
-      <div class="segmented">
-        ${LEVELS.map(
-          (level) => html`<label><input type="radio" name="level" value="${level}" ${level === state.level ? 'checked' : ''} /><span>${level}</span></label>`,
-        )}
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Période</legend>
-      <div class="segmented">
-        ${PERIODS.map(
-          (period) => html`<label><input type="radio" name="period" value="${period}" ${period === state.period ? 'checked' : ''} /><span>P${period}</span></label>`,
-        )}
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Exercices</legend>
-      ${state.exercises.map(
-        (exercise, index) => html`
-          <label class="exercise">
-            <input type="checkbox" data-exercise="${index}" ${exercise.enabled ? 'checked' : ''} />
-            <span class="exercise__label">${exercise.label}</span>
-            <input type="number" min="1" max="20" value="${exercise.count}" data-count="${index}" aria-label="Nombre de fiches" />
-          </label>`,
+    <div class="seg">
+      ${values.map(
+        (value) => html`<label class="seg__opt"><input type="radio" name="${name}" value="${value}" ${value === current ? 'checked' : ''} /><span>${label(value)}</span></label>`,
       )}
-    </fieldset>
+    </div>`;
+}
 
-    <fieldset>
-      <legend>Options</legend>
-      <label class="field">Prénom <input type="text" name="studentName" value="${state.studentName}" placeholder="facultatif" /></label>
-      <label class="field">Numéro de fiche <input type="text" name="seed" value="${state.seed}" /></label>
-      <label class="check"><input type="checkbox" name="answerKey" ${state.answerKey ? 'checked' : ''} /> Ajouter le corrigé à la fin</label>
-    </fieldset>
+function renderExerciseList(): Fragment {
+  const subjects = [...new Set(EXERCISES.map((exercise) => exercise.subject))];
+  return html`
+    <ul class="ex-list">
+      ${subjects.map(
+        (subject) => html`
+          <li class="app-panel__subject">${subject}</li>
+          ${EXERCISES.filter((exercise) => exercise.subject === subject).map((exercise) => {
+            const index = state.exercises.findIndex((choice) => choice.id === exercise.id);
+            const choice = state.exercises[index];
+            const on = choice?.enabled ?? false;
+            const count = choice?.count ?? 1;
+            return html`
+              <li class="ex-item ${on ? '' : 'is-off'}">
+                <label class="ex-check"><input type="checkbox" data-exercise="${index}" ${on ? 'checked' : ''} /><span class="ex-item__name">${exercise.label}</span></label>
+                <div class="stepper" role="group" aria-label="Nombre de fiches">
+                  <button type="button" aria-label="Une fiche de moins" data-dec="${index}" ${!on || count <= 1 ? 'disabled' : ''}>${ICON_MINUS}</button>
+                  <output>${on ? count : 0}</output>
+                  <button type="button" aria-label="Une fiche de plus" data-inc="${index}" ${!on || count >= MAX_COUNT ? 'disabled' : ''}>${ICON_PLUS}</button>
+                </div>
+              </li>`;
+          })}`,
+      )}
+    </ul>`;
+}
 
-    <div class="actions">
-      <button type="button" data-action="shuffle">Nouvelle fiche</button>
-      <button type="button" class="primary" data-action="print">Imprimer / PDF</button>
+function totalSheets(): number {
+  return state.exercises.reduce((total, choice) => total + (choice.enabled ? choice.count : 0), 0);
+}
+
+function renderPanel(): string {
+  const total = totalSheets();
+  return html`
+    <fieldset class="field">
+      <legend class="field__label">Niveau</legend>
+      ${seg('level', LEVELS, state.level, (v) => v)}
+    </fieldset>
+    <fieldset class="field">
+      <legend class="field__label">Période</legend>
+      ${seg('period', PERIODS, state.period, (v) => `P${v}`)}
+    </fieldset>
+    <fieldset class="field">
+      <legend class="field__label">Exercices</legend>
+      ${renderExerciseList()}
+      <div class="ex-total"><span>Total</span><strong>${total} ${total > 1 ? 'fiches' : 'fiche'}</strong></div>
+    </fieldset>
+    <div class="field">
+      <label class="field__label" for="seed">Numéro de fiche</label>
+      <div class="input-row">
+        <input id="seed" class="input input--mono" name="seed" value="${state.seed}" inputmode="numeric" />
+        <button type="button" class="btn btn--secondary btn--icon" aria-label="Tirer un nouveau numéro" data-action="shuffle">${ICON_DICE}</button>
+      </div>
+      <span class="field__hint">Même numéro = mêmes fiches. Pratique pour réimprimer.</span>
     </div>
-    <p class="hint">Dans la boîte d'impression, choisis « Enregistrer au format PDF » et désactive les en-têtes et pieds de page.</p>`.html;
+    <div class="field">
+      <label class="field__label" for="studentName">Prénom de l'élève</label>
+      <input id="studentName" class="input" name="studentName" value="${state.studentName}" placeholder="Laisser vide pour une ligne à remplir" />
+    </div>
+    <p class="app-hint">Dans la boîte d'impression, choisis « Enregistrer au format PDF », marges « Aucune » et sans en-têtes ni pieds de page.</p>`.html;
+}
+
+function renderMeta(pages: Page[]): string {
+  const total = totalSheets();
+  return `${state.level} · P${state.period} · ${total} ${total > 1 ? 'fiches' : 'fiche'} · ${pages.length} pages A4${state.answerKey ? ' (corrigés inclus)' : ''} · n° ${state.seed}`;
 }
 
 export function mountApp(root: HTMLElement): void {
   root.innerHTML = html`
-    <aside class="controls" id="controls"></aside>
-    <main class="preview" id="preview"></main>`.html;
-  const controls = root.querySelector<HTMLElement>('#controls');
-  const preview = root.querySelector<HTMLElement>('#preview');
-  if (!controls || !preview) throw new Error('App skeleton missing');
+    <div class="app">
+      <header class="app-bar app-chrome">
+        <div class="app-logo">${LOGO}<span>Pokexo</span><small>Fiches d'exercices CP · CE1</small></div>
+        <a href="https://github.com/hamzdi/pokexo" style="font-size: 14px; font-weight: 500">GitHub</a>
+      </header>
+      <div class="app-body">
+        <aside class="app-panel app-chrome" id="panel" aria-label="Réglages de génération"></aside>
+        <main class="app-main">
+          <div class="app-actions app-chrome">
+            <div class="app-actions__meta"><strong>Aperçu</strong><span id="meta"></span></div>
+            <div class="app-actions__group">
+              <label class="switch"><input type="checkbox" name="answerKey" ${state.answerKey ? 'checked' : ''} /><span>Inclure le corrigé</span></label>
+              <span class="app-actions__sep" aria-hidden="true"></span>
+              <button type="button" class="btn btn--secondary" data-action="shuffle">${ICON_REFRESH}Regénérer</button>
+              <button type="button" class="btn btn--primary" data-action="print">${ICON_PRINT}Imprimer / PDF</button>
+            </div>
+          </div>
+          <section class="app-desk" id="desk" aria-label="Aperçu des fiches A4"></section>
+        </main>
+      </div>
+    </div>`.html;
 
-  const refreshPreview = (): void => {
-    preview.innerHTML = renderPages();
+  const panel = root.querySelector<HTMLElement>('#panel');
+  const desk = root.querySelector<HTMLElement>('#desk');
+  const meta = root.querySelector<HTMLElement>('#meta');
+  if (!panel || !desk || !meta) throw new Error('App skeleton missing');
+
+  const refresh = (rebuildPanel: boolean): void => {
+    if (rebuildPanel) panel.innerHTML = renderPanel();
+    const pages = buildPages();
+    desk.innerHTML = renderDesk(pages);
+    meta.textContent = renderMeta(pages);
   };
+  refresh(true);
 
-  controls.innerHTML = renderControls();
-  refreshPreview();
-
-  controls.addEventListener('input', (event) => {
+  root.addEventListener('input', (event) => {
     const target = event.target as HTMLInputElement;
+    let rebuild = false;
     if (target.name === 'level') state.level = target.value as Level;
     else if (target.name === 'period') state.period = Number(target.value) as Period;
     else if (target.name === 'seed') state.seed = target.value;
     else if (target.name === 'studentName') state.studentName = target.value;
     else if (target.name === 'answerKey') state.answerKey = target.checked;
     else if (target.dataset.exercise !== undefined) {
-      const exercise = state.exercises[Number(target.dataset.exercise)];
-      if (exercise) exercise.enabled = target.checked;
-    } else if (target.dataset.count !== undefined) {
-      const exercise = state.exercises[Number(target.dataset.count)];
-      if (exercise) exercise.count = Math.min(20, Math.max(1, Number(target.value) || 1));
-    }
-    refreshPreview();
+      const choice = state.exercises[Number(target.dataset.exercise)];
+      if (choice) choice.enabled = target.checked;
+      rebuild = true;
+    } else return;
+    refresh(rebuild);
   });
 
-  controls.addEventListener('click', (event) => {
-    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
+  root.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
     if (!button) return;
     if (button.dataset.action === 'print') {
       window.print();
-    } else if (button.dataset.action === 'shuffle') {
-      state.seed = String(Math.floor(Math.random() * 90000) + 10000);
-      const seedInput = controls.querySelector<HTMLInputElement>('input[name="seed"]');
-      if (seedInput) seedInput.value = state.seed;
-      refreshPreview();
+      return;
     }
+    if (button.dataset.action === 'shuffle') {
+      state.seed = String(1000 + Math.floor(Math.random() * 9000));
+      refresh(true);
+      return;
+    }
+    const step = button.dataset.inc !== undefined ? 1 : button.dataset.dec !== undefined ? -1 : 0;
+    if (step === 0) return;
+    const choice = state.exercises[Number(button.dataset.inc ?? button.dataset.dec)];
+    if (!choice) return;
+    choice.count = Math.min(MAX_COUNT, Math.max(1, choice.count + step));
+    refresh(true);
   });
 }

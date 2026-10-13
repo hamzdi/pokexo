@@ -1,22 +1,28 @@
 /**
  * Combat exercise generator.
  *
- * Two Pokémon fight over a few rounds. The sheet prints each attack's damage and
- * the child computes the defender's remaining PV after every round. The
- * generator is a pure function of (level, period, seed, pokedex) and also
- * returns the answer key.
+ * Two Pokémon fight over a few rounds, each one carrying two moves with fixed
+ * damage printed on its card. The sheet prints each round's move and the child
+ * computes the defender's remaining PV. The generator is a pure function of
+ * (level, period, seed, pokedex) and also returns the answer key.
  */
-import { attackNameFor } from './attacks.ts';
+import { attackNamesFor } from './attacks.ts';
 import { COMBAT_RULES, needsBorrow, scaleHp, type CombatRules } from './pedagogy.ts';
-import { createRng, type Rng } from './rng.ts';
+import { createRng, seedFromString, type Rng } from './rng.ts';
 import type { Level, Period, PokemonData } from './types.ts';
 
 export type FighterIndex = 0 | 1;
 
+export interface Move {
+  name: string;
+  damage: number;
+}
+
 export interface Fighter {
   pokemon: PokemonData;
   pv: number;
-  attack: { name: string; type: string };
+  type: string;
+  moves: [Move, Move];
 }
 
 export interface AttackRow {
@@ -51,6 +57,8 @@ export interface CombatExercise {
   seed: number;
   rules: CombatRules;
   fighters: [Fighter, Fighter];
+  /** Index of the Pokémon attacking in round 1 (the faster one). */
+  first: FighterIndex;
   rows: CombatRow[];
   finalPv: [number, number];
   /** Index of the winner, or null for a draw. */
@@ -99,12 +107,45 @@ function pickPair(rng: Rng, pokedex: readonly PokemonData[], rules: CombatRules)
 }
 
 /**
- * Nudge a PV total so that `hits` no-borrow subtractions are always possible:
- * the units digit must leave room for the smallest damage repeated `hits` times.
+ * Two moves with fixed damage. Without borrowing (CP), the first move is kept
+ * small enough that `hits` of it never cross a ten, which guarantees that at
+ * least one move always fits; from period 4 the second move is a round number
+ * of tens so that larger damage stays borrow-free too.
  */
-function adjustPvForNoBorrow(rng: Rng, pv: number, hits: number, rules: CombatRules): number {
-  if (rules.allowBorrow || rules.damageMin >= 10) return pv;
-  const unitsNeeded = Math.min(9, hits * rules.damageMin);
+function pickMoves(rng: Rng, type: string, hits: number, rules: CombatRules): [Move, Move] {
+  const [nameA, nameB] = attackNamesFor(type);
+  if (rules.allowBorrow) {
+    const a = rng.int(rules.damageMin, rules.damageMax);
+    let b = rng.int(rules.damageMin, rules.damageMax);
+    if (b === a) b = a < rules.damageMax ? a + 1 : a - 1;
+    return [
+      { name: nameA, damage: a },
+      { name: nameB, damage: b },
+    ];
+  }
+  const smallMax = Math.max(rules.damageMin, Math.min(rules.damageMax, Math.floor(9 / Math.max(1, hits))));
+  const small = rng.int(rules.damageMin, smallMax);
+  let big: number;
+  if (rules.damageMax >= 10) {
+    const tens = Math.floor(rules.damageMax / 10);
+    big = rng.int(1, tens) * 10;
+  } else {
+    big = rng.int(small, rules.damageMax);
+    if (big === small) big = small < rules.damageMax ? small + 1 : Math.max(rules.damageMin, small - 1);
+  }
+  return [
+    { name: nameA, damage: small },
+    { name: nameB, damage: big },
+  ];
+}
+
+/**
+ * Nudge a PV total so that `hits` no-borrow subtractions of the small move are
+ * always possible: the units digit must leave room for it repeated `hits` times.
+ */
+function adjustPvForNoBorrow(rng: Rng, pv: number, hits: number, smallMove: number, rules: CombatRules): number {
+  if (rules.allowBorrow) return pv;
+  const unitsNeeded = Math.min(9, hits * smallMove);
   if (pv % 10 >= unitsNeeded) return pv;
   let adjusted = Math.floor(pv / 10) * 10 + rng.int(unitsNeeded, 9);
   if (adjusted > rules.pvMax) adjusted -= 10;
@@ -112,26 +153,43 @@ function adjustPvForNoBorrow(rng: Rng, pv: number, hits: number, rules: CombatRu
   return adjusted;
 }
 
-/** Choose the base damage of one hit, honouring the borrow policy of the level. */
-function pickBaseDamage(rng: Rng, pvBefore: number, multiplier: 1 | 2, rules: CombatRules): number {
-  const candidates: number[] = [];
-  for (let d = rules.damageMin; d <= rules.damageMax; d++) {
-    const effective = d * multiplier;
-    if (effective > pvBefore) continue;
-    if (!rules.allowBorrow && needsBorrow(pvBefore, effective)) continue;
-    candidates.push(d);
-  }
-  if (candidates.length > 0) return rng.pick(candidates);
-  // No damage fits: the hit knocks the defender out (PV go to 0).
-  return Math.max(rules.damageMin, Math.ceil(pvBefore / multiplier));
+/**
+ * Choose which move the attacker uses. Without borrowing, a move must fit digit
+ * by digit and leave enough units for the remaining hits of the small move; a
+ * fighter's first hit never knocks the defender out so the fight has substance.
+ */
+function pickMove(
+  rng: Rng,
+  attacker: Fighter,
+  pvBefore: number,
+  multiplier: 1 | 2,
+  hitsLeftAfter: number,
+  firstHit: boolean,
+  rules: CombatRules,
+): Move {
+  const small = attacker.moves[0].damage;
+  const fits = (move: Move): boolean => {
+    const effective = move.damage * multiplier;
+    if (rules.allowBorrow) return true;
+    if (effective > pvBefore || needsBorrow(pvBefore, effective)) return false;
+    return (pvBefore - effective) % 10 >= hitsLeftAfter * small;
+  };
+  const fitting = attacker.moves.filter(fits);
+  const gentle = fitting.filter((move) => move.damage * multiplier < pvBefore);
+  if (firstHit && gentle.length > 0) return rng.pick(gentle);
+  if (fitting.length > 0) return rng.pick(fitting);
+  // Should not happen thanks to pickMoves/adjustPvForNoBorrow; fall back to the small move.
+  return attacker.moves[0];
 }
 
-function planRows(rng: Rng, fighters: [Fighter, Fighter], rules: CombatRules): CombatRow[] {
+function planRows(rng: Rng, fighters: [Fighter, Fighter], first: FighterIndex, rules: CombatRules): CombatRow[] {
   const pv: [number, number] = [fighters[0].pv, fighters[1].pv];
   const rows: CombatRow[] = [];
-  // The faster Pokémon attacks first, like in the games.
-  let attacker: FighterIndex = fighters[0].pokemon.speed >= fighters[1].pokemon.speed ? 0 : 1;
+  let attacker = first;
   const potionRound = rules.potions && rules.rounds >= 3 ? rng.int(2, rules.rounds - 1) : -1;
+  const hitsLeft: [number, number] = [0, 0];
+  for (let round = 1; round <= rules.rounds; round++) hitsLeft[round % 2 === 1 ? other(first) : first]++;
+  const hitsTaken: [number, number] = [0, 0];
 
   for (let round = 1; round <= rules.rounds; round++) {
     const defender = other(attacker);
@@ -144,16 +202,18 @@ function planRows(rng: Rng, fighters: [Fighter, Fighter], rules: CombatRules): C
     const multiplier: 1 | 2 =
       rules.superEffective && multiplierAgainst(fighters[attacker].pokemon, fighters[defender].pokemon) === 2 ? 2 : 1;
     const pvBefore = pv[defender];
-    const baseDamage = pickBaseDamage(rng, pvBefore, multiplier, rules);
-    const damage = baseDamage * multiplier;
+    hitsLeft[defender]--;
+    const move = pickMove(rng, fighters[attacker], pvBefore, multiplier, hitsLeft[defender], hitsTaken[defender] === 0, rules);
+    hitsTaken[defender]++;
+    const damage = move.damage * multiplier;
     const pvAfter = Math.max(0, pvBefore - damage);
     rows.push({
       kind: 'attack',
       round,
       attacker,
       defender,
-      attackName: fighters[attacker].attack.name,
-      baseDamage,
+      attackName: move.name,
+      baseDamage: move.damage,
       multiplier,
       damage,
       pvBefore,
@@ -179,34 +239,32 @@ function finalState(fighters: [Fighter, Fighter], rows: CombatRow[]): Pick<Comba
 
 export function generateCombat({ level, period, seed, pokedex }: CombatOptions): CombatExercise {
   const rules = COMBAT_RULES[level][period];
-  const rng = createRng(seed);
+  const rng = createRng(seedFromString(`combat:${seed}`));
   const [a, b] = pickPair(rng.fork('pair'), pokedex, rules);
 
-  // The first attacker lands ceil(rounds / 2) hits, the other floor(rounds / 2).
-  const aFirst = a.speed >= b.speed;
-  const hitsOnA = aFirst ? Math.floor(rules.rounds / 2) : Math.ceil(rules.rounds / 2);
+  // The faster Pokémon attacks first and lands ceil(rounds / 2) hits; the other floor(rounds / 2).
+  const first: FighterIndex = a.speed >= b.speed ? 0 : 1;
+  const hitsOnA = first === 0 ? Math.floor(rules.rounds / 2) : Math.ceil(rules.rounds / 2);
   const hitsOnB = rules.rounds - hitsOnA;
+  const movesRng = rng.fork('moves');
+  const typeA = a.types[0] ?? 'Normal';
+  const typeB = b.types[0] ?? 'Normal';
+  const movesA = pickMoves(movesRng, typeA, hitsOnB, rules);
+  const movesB = pickMoves(movesRng, typeB, hitsOnA, rules);
+  // A's PV must absorb B's small move hitsOnA times, and vice versa.
   const pvRng = rng.fork('pv');
   const fighters: [Fighter, Fighter] = [
-    {
-      pokemon: a,
-      pv: adjustPvForNoBorrow(pvRng, scaleHp(a.hp, rules), hitsOnA, rules),
-      attack: { name: attackNameFor(a.types[0] ?? 'Normal'), type: a.types[0] ?? 'Normal' },
-    },
-    {
-      pokemon: b,
-      pv: adjustPvForNoBorrow(pvRng, scaleHp(b.hp, rules), hitsOnB, rules),
-      attack: { name: attackNameFor(b.types[0] ?? 'Normal'), type: b.types[0] ?? 'Normal' },
-    },
+    { pokemon: a, type: typeA, moves: movesA, pv: adjustPvForNoBorrow(pvRng, scaleHp(a.hp, rules), hitsOnA, movesB[0].damage, rules) },
+    { pokemon: b, type: typeB, moves: movesB, pv: adjustPvForNoBorrow(pvRng, scaleHp(b.hp, rules), hitsOnB, movesA[0].damage, rules) },
   ];
 
-  let rows = planRows(rng.fork('rows:0'), fighters, rules);
+  let rows = planRows(rng.fork('rows:0'), fighters, first, rules);
   if (rules.requireBorrow) {
     for (let attempt = 1; attempt < PLAN_ATTEMPTS; attempt++) {
       if (rows.some((row) => row.kind === 'attack' && row.borrow)) break;
-      rows = planRows(rng.fork(`rows:${attempt}`), fighters, rules);
+      rows = planRows(rng.fork(`rows:${attempt}`), fighters, first, rules);
     }
   }
 
-  return { kind: 'combat', level, period, seed, rules, fighters, rows, ...finalState(fighters, rows) };
+  return { kind: 'combat', level, period, seed, rules, fighters, first, rows, ...finalState(fighters, rows) };
 }

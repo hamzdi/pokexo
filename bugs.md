@@ -4,3 +4,9 @@ _Aucun bug pour le moment._
 
 ## 2026-10-13 — Double échappement des fragments HTML imbriqués (corrigé)
 Le tag `html` renvoyait une chaîne, ré-échappée par le template parent : le corrigé affichait du HTML brut. Détecté par `tests/render.test.ts`. Corrigé en renvoyant un `Fragment` reconnu comme sûr.
+
+## 2026-10-13 — Débordement A4 des fiches combat (corrigé)
+Les cellules « PV restants » (étiquette au-dessus de la case) mesuraient 16,7 mm au lieu de 10 mm, et les fiches CE1 P4–P5 à six lignes dépassaient la page. Mesuré dans le navigateur, corrigé en plaçant l'étiquette en ligne et en mettant les questions finales côte à côte. Vérifié par balayage de 480 fiches.
+
+## 2026-10-13 — Retenue possible en CP avec les attaques fixes (corrigé)
+Les dégâts minimaux CP P4–P5 (5) rendaient impossible le « sans retenue » sur deux coups, et une grosse attaque pouvait consommer les unités nécessaires aux coups suivants. Détecté par `tests/combat.test.ts`.

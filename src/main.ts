@@ -1,3 +1,4 @@
+import './pokexo.css';
 import './style.css';
 import { mountApp } from './ui/app.ts';
 
