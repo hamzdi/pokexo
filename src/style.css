@@ -169,3 +169,6 @@ body { margin: 0; }
 /* Wider combat cards so move names stay on one line. */
 .sheet--cp .arena .pk-card { --card-w: 70mm; }
 .sheet--ce1 .arena .pk-card { --card-w: 58mm; }
+
+.sheet__link { color: inherit; text-decoration: none; }
+.sheet__link:hover { text-decoration: underline; }

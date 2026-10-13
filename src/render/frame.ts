@@ -52,7 +52,7 @@ export function renderSheet(o: FrameOptions): string {
       <div class="sheet__body">${o.body}</div>
 
       <footer class="sheet__foot">
-        <span>Données Pokémon : Tyradex (tyradex.app)</span>
+        <span>Données et images Pokémon : <a class="sheet__link" href="https://tyradex.app" rel="noopener">Tyradex (tyradex.app)</a></span>
         <span>${o.subject} · fiche n° ${o.seed}${o.answerKey ? ` · ${label.toLowerCase()}` : ''}</span>
       </footer>
     </article>`.html;
