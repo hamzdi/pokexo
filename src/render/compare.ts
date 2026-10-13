@@ -37,7 +37,9 @@ export function renderCompareSheet(ex: CompareExercise, options: SheetOptions): 
   const parts: string[] = ['Entoure le Pokémon qui a le plus de PV.'];
   if (ex.rules.askSign) parts.push('Écris <, > ou = dans la case.');
   if (ex.rules.askGap) parts.push("Calcule l'écart de PV.");
-  const body = html`<div class="versus-list">${ex.duels.map((duel) => renderDuel(duel, ex, options))}</div>`;
+  const body = html`
+    <div class="versus-list">${ex.duels.map((duel) => renderDuel(duel, ex, options))}</div>
+    ${ex.rules.realPv ? '' : html`<p class="pv-note">PV adaptés au niveau : les vrais PV de ces Pokémon sont plus grands.</p>`}`;
   return renderSheet({
     title: 'Qui a le plus de PV ?',
     subject: 'Mathématiques',

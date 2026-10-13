@@ -172,3 +172,9 @@ body { margin: 0; }
 
 .sheet__link { color: inherit; text-decoration: none; }
 .sheet__link:hover { text-decoration: underline; }
+
+.pv-note { margin: 0; font: italic 500 12px var(--font-ui); color: var(--px-ink-2); }
+
+.sheet--error { gap: 4mm; }
+.error-text { font-size: 18px; margin: 0; }
+.error-detail { font: 12px ui-monospace, monospace; color: var(--px-ink-2); margin: 0; }

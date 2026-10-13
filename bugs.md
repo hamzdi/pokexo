@@ -19,3 +19,9 @@ Signalé par Hamza sur « Combat » et « Qui a le plus de PV ? ». Les 251 URL 
 
 ## 2026-10-13 — Débordement des cartes avec attaques Dragon et Fée (corrigé)
 Révélé par le filtre « Dragon seul » : « Souffle du dragon » et « Étincelle magique » passaient sur deux lignes dans les cartes. Noms remplacés par des attaques réelles plus courtes (Draco-Souffle, Draco-Griffe, Éclat magique, Câlinerie) et retour à la ligne interdit dans la liste des attaques.
+
+## 2026-10-14 — PV réels : retenue avec 100 PV et KO au premier coup (corrigés avant livraison)
+Détectés par les tests lors du passage aux PV réels : 100 − 30 flagué comme retenue (plafond CP P5 ramené à 99) ; Abra 25 PV mis KO par une attaque de 29 en CE1 P2 (contrainte d'attaque non létale au premier coup).
+
+## 2026-10-14 — Filtre étroit + plafond de PV : plantage silencieux de la comparaison (corrigé avant livraison)
+Avec « Acier seul » en CP P3, moins de dix Pokémon passaient sous 59 PV ; le générateur levait une erreur non interceptée et l'aperçu gardait les anciennes fiches. Les générateurs complètent désormais avec les Pokémon aux PV les plus proches du plafond, et l'interface affiche une page d'erreur explicite si une fiche reste impossible.

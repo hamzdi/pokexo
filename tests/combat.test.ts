@@ -134,13 +134,41 @@ describe('generateCombat moves', () => {
           }
           for (const fighter of ex.fighters) {
             expect(fighter.moves[0].damage).not.toBe(fighter.moves[1].damage);
-            for (const move of fighter.moves) {
-              expect(move.damage).toBeGreaterThanOrEqual(ex.rules.damageMin);
-              expect(move.damage).toBeLessThanOrEqual(ex.rules.damageMax);
-            }
+            for (const move of fighter.moves) expect(ex.rules.damages).toContain(move.damage);
+            if (ex.rules.realPv) expect(fighter.pv).toBe(fighter.pokemon.hp);
           }
         });
       }
     }
+  });
+});
+
+describe('generateCombat PV policy', () => {
+  it('uses real HP from CP period 3, within the period ceiling', () => {
+    for (const [level, period] of [['CP', 3], ['CP', 4], ['CP', 5], ['CE1', 1], ['CE1', 5]] as const) {
+      // GIVEN exercises of a period that uses real PV
+      every(level, period, (ex) => {
+        // WHEN inspecting the cards
+        // THEN PV equal the Tyradex HP stat and respect the ceiling
+        for (const fighter of ex.fighters) {
+          expect(fighter.pv).toBe(fighter.pokemon.hp);
+          expect(fighter.pv).toBeLessThanOrEqual(ex.rules.pvMax);
+        }
+      });
+    }
+  });
+
+  it('gives a Pokémon the same PV on every CP period 2 sheet', () => {
+    // GIVEN many CP period 2 exercises
+    const seen = new Map<number, number>();
+    every('CP', 2, (ex) => {
+      for (const fighter of ex.fighters) {
+        // WHEN the same Pokémon appears again
+        const previous = seen.get(fighter.pokemon.id);
+        // THEN its PV are unchanged
+        if (previous !== undefined) expect(fighter.pv).toBe(previous);
+        seen.set(fighter.pokemon.id, fighter.pv);
+      }
+    });
   });
 });

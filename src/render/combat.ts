@@ -79,6 +79,7 @@ function renderRules(ex: CombatExercise, hidden?: readonly number[]): Fragment {
   if (ex.rules.superEffective) lines.push('Manche sur fond orangé avec <strong>×2</strong> : l\u2019attaque est <strong>super efficace</strong>, les dégâts sont doublés.');
   if (ex.rules.potions) lines.push('Une <strong>potion</strong> redonne des PV.');
   if (hidden) lines.push('<strong>Manche mystère :</strong> les PV restants sont écrits, retrouve les dégâts (PV avant − PV après).');
+  if (!ex.rules.realPv) lines.push('<em>PV adaptés au niveau : les vrais PV de ces Pokémon sont plus grands.</em>');
   return html`<ul class="rules">${lines.map((line) => html`<li>${raw(line)}</li>`)}</ul>`;
 }
 

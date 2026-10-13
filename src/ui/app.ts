@@ -76,12 +76,27 @@ function buildPages(): Page[] {
     if (!choice.enabled || !definition) continue;
     for (let i = 0; i < choice.count; i++) {
       const seed = (baseSeed() + i) % 100000;
-      const rendered = definition.render(state.level, state.period, seed, { studentName: state.studentName }, pool);
-      sheets.push({ label: definition.label, answerKey: false, markup: rendered.sheet });
-      if (state.answerKey) keys.push({ label: definition.label, answerKey: true, markup: rendered.answerKey });
+      try {
+        const rendered = definition.render(state.level, state.period, seed, { studentName: state.studentName }, pool);
+        sheets.push({ label: definition.label, answerKey: false, markup: rendered.sheet });
+        if (state.answerKey) keys.push({ label: definition.label, answerKey: true, markup: rendered.answerKey });
+      } catch (error) {
+        sheets.push({ label: definition.label, answerKey: false, markup: renderErrorSheet(definition.label, error) });
+      }
     }
   }
   return [...sheets, ...keys];
+}
+
+/** Shown in place of a sheet when a generator cannot work with the current selection. */
+function renderErrorSheet(label: string, error: unknown): string {
+  const detail = error instanceof Error ? error.message : String(error);
+  return html`
+    <article class="sheet sheet--cp sheet--error">
+      <h1 class="sheet__title">${label}</h1>
+      <p class="error-text">Impossible de générer cette fiche avec la sélection actuelle de Pokémon. Élargis les types ou réactive les légendaires.</p>
+      <p class="error-detail">${detail}</p>
+    </article>`.html;
 }
 
 function renderDesk(pages: Page[]): string {
