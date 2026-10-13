@@ -25,7 +25,7 @@ interface State {
   exercises: ExerciseChoice[];
   /** Selected Pokémon types; all selected by default. */
   types: Set<string>;
-  includeLegendary: boolean;
+  legendaryOnly: boolean;
 }
 
 const ALL_TYPES: readonly string[] = TYPE_ORDER.filter((type) => POKEDEX.some((p) => p.types.includes(type)));
@@ -40,12 +40,12 @@ const state: State = {
   answerKey: true,
   exercises: EXERCISES.map((exercise) => ({ id: exercise.id, enabled: true, count: 1 })),
   types: new Set(ALL_TYPES),
-  includeLegendary: true,
+  legendaryOnly: false,
 };
 
 function currentPool() {
   const types = state.types.size === ALL_TYPES.length ? null : state.types;
-  return filterPokedex(POKEDEX, { types, includeLegendary: state.includeLegendary });
+  return filterPokedex(POKEDEX, { types, legendaryOnly: state.legendaryOnly });
 }
 
 const ICON_MINUS = raw('<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>');
@@ -172,8 +172,9 @@ function renderTypeFilter(): Fragment {
         <button type="button" class="link" data-action="types-all">Tous les types</button>
         <button type="button" class="link" data-action="types-none">Aucun</button>
       </div>
-      <label class="switch"><input type="checkbox" name="includeLegendary" ${state.includeLegendary ? 'checked' : ''} /><span>Inclure les légendaires</span></label>
+      <label class="switch"><input type="checkbox" name="legendaryOnly" ${state.legendaryOnly ? 'checked' : ''} /><span>Exclusivement Pokémon légendaires</span></label>
       ${hint}
+      ${state.legendaryOnly && state.level === 'CP' ? html`<span class="field__hint field__hint--warn">Les légendaires ont entre 90 et 115 PV : leurs PV réels dépassent les nombres du CP.</span>` : ''}
     </fieldset>`;
 }
 
@@ -258,13 +259,15 @@ export function mountApp(root: HTMLElement): void {
   root.addEventListener('input', (event) => {
     const target = event.target as HTMLInputElement;
     let rebuild = false;
-    if (target.name === 'level') state.level = target.value as Level;
-    else if (target.name === 'period') state.period = Number(target.value) as Period;
+    if (target.name === 'level') {
+      state.level = target.value as Level;
+      rebuild = true;
+    } else if (target.name === 'period') state.period = Number(target.value) as Period;
     else if (target.name === 'seed') state.seed = target.value;
     else if (target.name === 'studentName') state.studentName = target.value;
     else if (target.name === 'answerKey') state.answerKey = target.checked;
-    else if (target.name === 'includeLegendary') {
-      state.includeLegendary = target.checked;
+    else if (target.name === 'legendaryOnly') {
+      state.legendaryOnly = target.checked;
       rebuild = true;
     } else if (target.dataset.type !== undefined) {
       if (target.checked) state.types.add(target.dataset.type);
