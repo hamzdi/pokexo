@@ -135,3 +135,6 @@ Les noms de Pokémon ne sont **jamais à écrire** : ils sont imprimés, remplac
 - **Scripte** : lettres détachées, comme l'imprimé de ce document. Utilisée pour les consignes et les textes à lire.
 - **Cursive** : écriture "attachée" apprise en CP. Si l'élève doit **copier** un modèle (mot, phrase), le modèle est généralement donné en cursive (police Belle Allure ou équivalent).
 - Choix par défaut : consignes en scripte, modèles à copier en cursive, option désactivable dans l'interface.
+
+## Hébergement (ajout)
+Deux cibles pour un seul build statique : artifact Claude (partage rapide, privé par défaut) et GitHub Pages (URL stable pour les enseignants). Workflow Actions : build Vite → déploiement Pages à chaque push sur `main`. Si le dépôt reste privé, Pages nécessite GitHub Pro ; sinon le passer en public.

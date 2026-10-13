@@ -17,3 +17,9 @@ Choix par défaut aligné sur la pratique CP ; désactivable dans l'interface.
 
 ## 2026-10-13 — Dépôt GitHub perso `hamzdi/pokexo`, privé, fichiers de suivi `.md` versionnés
 Le compte GitHub actif localement est le compte pro ; le dépôt est créé sous le compte perso avec une identité git locale au dépôt.
+
+## 2026-10-13 — Hébergement : build statique unique, publiable en artifact ET en GitHub Pages
+Le même `dist/index.html` sert aux deux. GitHub Pages via Actions sur `main`. Attention : Pages sur un dépôt privé exige un compte GitHub Pro ; sinon passer le dépôt en public (projet non commercial, données MIT).
+
+## 2026-10-13 — Remote git avec identifiant explicite `hamzdi@github.com`
+Évite tout push avec le compte pro `hdiouane-actee` quel que soit le compte `gh` actif.
