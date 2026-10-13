@@ -1,0 +1,143 @@
+/* Placeholder styling until the Claude Design templates land. Structure and
+   class names are the contract; colours and fonts are meant to be replaced. */
+:root {
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --paper: #ffffff;
+  --panel: #f3f4f6;
+  --accent: #e3350d;
+  --accent-ink: #ffffff;
+  --line: #d1d5db;
+  --answer-bg: #fffbe6;
+  --answer-ink: #1d4ed8;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sheet: 'Andika', 'Lexend', 'Verdana', sans-serif;
+
+  --type-normal: #a8a878;
+  --type-feu: #f08030;
+  --type-eau: #6890f0;
+  --type-plante: #78c850;
+  --type-electrik: #f8d030;
+  --type-glace: #98d8d8;
+  --type-combat: #c03028;
+  --type-poison: #a040a0;
+  --type-sol: #e0c068;
+  --type-vol: #a890f0;
+  --type-psy: #f85888;
+  --type-insecte: #a8b820;
+  --type-roche: #b8a038;
+  --type-spectre: #705898;
+  --type-dragon: #7038f8;
+  --type-tenebres: #705848;
+  --type-acier: #b8b8d0;
+  --type-fee: #ee99ac;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-ui); color: var(--ink); background: #e5e7eb; }
+
+#app { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
+
+/* ---- Controls ---- */
+.controls { background: var(--panel); padding: 20px; border-right: 1px solid var(--line); position: sticky; top: 0; height: 100vh; overflow: auto; }
+.brand { margin: 0; font-size: 28px; color: var(--accent); }
+.brand__sub { margin: 0 0 20px; color: var(--muted); }
+fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 14px; padding: 10px 12px; background: var(--paper); }
+legend { font-weight: 600; padding: 0 6px; }
+.segmented { display: flex; gap: 6px; flex-wrap: wrap; }
+.segmented label { flex: 1; }
+.segmented input { position: absolute; opacity: 0; }
+.segmented span { display: block; text-align: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.segmented input:checked + span { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.exercise { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.exercise__label { flex: 1; }
+.exercise input[type='number'] { width: 56px; }
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 14px; }
+.field input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.actions { display: flex; gap: 8px; margin-top: 8px; }
+.actions button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); font: inherit; cursor: pointer; }
+.actions .primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.hint { font-size: 12px; color: var(--muted); }
+
+/* ---- Preview + A4 pages ---- */
+.preview { padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 24px; }
+.empty { color: var(--muted); }
+.page { width: 210mm; min-height: 297mm; padding: 12mm; background: var(--paper); box-shadow: 0 2px 12px rgba(0,0,0,.15); font-family: var(--font-sheet); display: flex; flex-direction: column; }
+
+.sheet__header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid var(--accent); padding-bottom: 6px; margin-bottom: 10px; }
+.sheet__title { margin: 0; font-size: 26px; }
+.sheet__meta { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.sheet__identity { display: flex; flex-direction: column; gap: 8px; font-size: 14px; text-align: right; }
+.line { display: inline-block; min-width: 45mm; border-bottom: 1px solid var(--ink); padding: 0 4px; }
+.tag { font-size: 13px; background: var(--answer-ink); color: #fff; padding: 2px 8px; border-radius: 999px; vertical-align: middle; margin-left: 8px; }
+
+.consigne { display: flex; gap: 10px; align-items: center; background: var(--panel); border-radius: 10px; padding: 8px 12px; font-size: 16px; }
+.picto { font-size: 26px; }
+.consigne p { margin: 0; }
+.rules { margin: 8px 0; padding-left: 20px; font-size: 14px; line-height: 1.5; }
+
+.arena { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 10px 0; }
+.versus { font-weight: 800; font-size: 24px; color: var(--accent); }
+.card { width: 58mm; border: 3px solid var(--type-color, var(--line)); border-radius: 12px; padding: 8px; background: #fff; text-align: center; }
+.card__header { display: flex; justify-content: space-between; align-items: baseline; }
+.card__name { font-weight: 700; font-size: 16px; }
+.card__pv { font-weight: 800; font-size: 22px; }
+.card__pv small { font-size: 11px; }
+.card__sprite { width: 36mm; height: 36mm; object-fit: contain; image-rendering: auto; }
+.badge { display: inline-block; background: var(--type-color, var(--line)); color: #fff; text-shadow: 0 0 2px rgba(0,0,0,.5); padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.card__attack { margin-top: 6px; border-top: 1px dashed var(--line); padding-top: 6px; font-size: 14px; }
+
+.rounds { width: 100%; border-collapse: collapse; font-size: 15px; margin-top: 6px; }
+.rounds th, .rounds td { border: 1px solid var(--ink); padding: 6px 8px; vertical-align: middle; }
+.rounds th { background: var(--panel); font-size: 13px; }
+.col-round { width: 18mm; text-align: center; font-weight: 700; }
+.col-attacker { white-space: nowrap; }
+.mini { width: 10mm; height: 10mm; vertical-align: middle; margin-right: 4px; }
+.col-pv { width: 48mm; }
+.col-pv__who { display: block; font-size: 11px; color: var(--muted); }
+.row-potion td { background: #f0fdf4; }
+.potion { font-weight: 700; color: #15803d; }
+.super { font-weight: 700; color: var(--accent); display: block; font-size: 12px; }
+
+.answer { display: inline-block; min-width: 22mm; height: 9mm; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--answer-bg); vertical-align: middle; text-align: center; line-height: 9mm; font-weight: 700; }
+.answer--small { min-width: 14mm; height: 7mm; line-height: 7mm; }
+.answer--wide { min-width: 50mm; }
+.answer--filled { color: var(--answer-ink); }
+
+.questions { margin-top: 12px; font-size: 16px; }
+.questions p { margin: 8px 0; }
+
+.sheet__footer { margin-top: auto; display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4px; }
+
+/* Type colours feed the card border and badge. */
+.type-normal { --type-color: var(--type-normal); }
+.type-feu { --type-color: var(--type-feu); }
+.type-eau { --type-color: var(--type-eau); }
+.type-plante { --type-color: var(--type-plante); }
+.type-electrik { --type-color: var(--type-electrik); }
+.type-glace { --type-color: var(--type-glace); }
+.type-combat { --type-color: var(--type-combat); }
+.type-poison { --type-color: var(--type-poison); }
+.type-sol { --type-color: var(--type-sol); }
+.type-vol { --type-color: var(--type-vol); }
+.type-psy { --type-color: var(--type-psy); }
+.type-insecte { --type-color: var(--type-insecte); }
+.type-roche { --type-color: var(--type-roche); }
+.type-spectre { --type-color: var(--type-spectre); }
+.type-dragon { --type-color: var(--type-dragon); }
+.type-tenebres { --type-color: var(--type-tenebres); }
+.type-acier { --type-color: var(--type-acier); }
+.type-fee { --type-color: var(--type-fee); }
+
+/* ---- Print: one sheet per A4 page, controls hidden ---- */
+@page { size: A4; margin: 12mm; }
+@media print {
+  body { background: #fff; }
+  #app { display: block; }
+  .controls { display: none; }
+  .preview { padding: 0; gap: 0; display: block; }
+  .page { width: auto; min-height: 0; padding: 0; box-shadow: none; break-after: page; page-break-after: always; }
+  .page:last-child { break-after: auto; page-break-after: auto; }
+  .answer, .row-potion td, .rounds th, .consigne { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
