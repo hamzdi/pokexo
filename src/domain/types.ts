@@ -11,6 +11,9 @@ export interface PokemonData {
   id: number;
   name: string;
   category: string;
+  /** Original Tyradex sprite URL (attribution, rebuilds). */
+  spriteUrl: string;
+  /** Sprite as an embedded data URI, so sheets never wait on the network. */
   sprite: string;
   types: string[];
   /** Damage multiplier received from each attacking type (0, 0.5, 1 or 2). */

@@ -13,3 +13,4 @@
 - PR #2 fusionnée, Pages redéployé.
 - Itération 5 (branche `feat/more-exercises`) : quatre exercices ajoutés — « Manche mystère » (dégâts cachés, variante du combat), « Grille à coordonnées » (5×5 CP, 6×6 CE1 avec croix à dessiner), « Fiche d'identité » (lecture, vrai/faux CP, questions ouvertes CE1), « Phrase en désordre + copie » (étiquettes à découper, modèle cursif, lignes Seyès). 36 tests verts ; balayage de 1 400 fiches rendues sans débordement.
 - PR #3 fusionnée, Pages redéployé : 7 exercices en ligne.
+- Itération 6 (branche `fix/inline-sprites`) : sprites embarqués dans le bundle (WebP 192 px en data URI, 2,7 Mo) pour supprimer les images vides dues aux chargements distants ; script de données capable de repartir du bundle commité si l'API Tyradex est injoignable.
