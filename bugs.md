@@ -13,3 +13,6 @@ Les dégâts minimaux CP P4–P5 (5) rendaient impossible le « sans retenue » 
 
 ## 2026-10-13 — Débordement de la manche mystère en CP P4–P5 (corrigé)
 Le paragraphe de règle supplémentaire faisait déborder les fiches CP déjà denses. Règle fusionnée dans la liste, classe `sheet--mystery` dédiée, combat CP légèrement compacté. Vérifié par balayage de 1 400 fiches.
+
+## 2026-10-13 — Sprites manquants sur certaines fiches (corrigé)
+Signalé par Hamza sur « Combat » et « Qui a le plus de PV ? ». Les 251 URL répondaient en 200 : le problème venait du chargement simultané de dizaines d'images distantes (lenteur ou refus temporaire de GitHub), pas de Pokémon sans image. Corrigé en embarquant les sprites dans le bundle.

@@ -53,3 +53,6 @@ Les énoncés faux sont construits à partir d'un autre Pokémon (type, catégor
 
 ## 2026-10-13 — Phrase en désordre : le nom du Pokémon est une étiquette, jamais écrit
 L'étiquette porte le sprite et le nom imprimé ; dans la copie en cursive, le nom est remplacé par le sprite en marge et dans le modèle.
+
+## 2026-10-13 — Sprites embarqués dans le bundle (WebP 192 px, data URI)
+Les sprites Tyradex (PNG 512 px, ~125 Ko) chargés à la volée depuis GitHub laissaient des cases vides à l'affichage et à l'impression quand des dizaines d'images partaient en même temps. Ils sont désormais réduits par `sharp` au build de données et inlinés : page de 2,8 Mo, aucune requête image à l'exécution, impression fiable et hors ligne. L'URL d'origine reste dans `spriteUrl` pour l'attribution.
