@@ -6,6 +6,8 @@
 import type { PokemonData } from './types.ts';
 
 export interface PoolFilter {
+  /** Generations to keep; null keeps all. */
+  generations: ReadonlySet<number> | null;
   /** Types to keep (a Pokémon matches if any of its types is selected); null keeps all. */
   types: ReadonlySet<string> | null;
   /** Keep only legendary and mythical Pokémon. */
@@ -23,7 +25,9 @@ export interface PoolResult {
 export const MIN_POOL = 10;
 
 export function filterPokedex(pokedex: readonly PokemonData[], filter: PoolFilter): PoolResult {
-  const allowed = pokedex.filter((p) => !filter.legendaryOnly || p.legendary);
+  const allowed = pokedex.filter(
+    (p) => (!filter.legendaryOnly || p.legendary) && (filter.generations === null || filter.generations.has(p.generation)),
+  );
   const matches = allowed.filter((p) => filter.types === null || p.types.some((type) => filter.types?.has(type)));
   if (matches.length >= MIN_POOL) return { pool: matches, matching: matches.length, padded: 0 };
   // Pad first with other allowed Pokémon, then (legendary-only mode) with any other Pokémon.

@@ -6,7 +6,7 @@ import { typeSlug } from '../domain/attacks.ts';
 import { POKEDEX } from '../domain/pokedex.ts';
 import { filterPokedex, MIN_POOL } from '../domain/pool.ts';
 import { seedFromString } from '../domain/rng.ts';
-import { LEVELS, PERIODS, TYPE_ORDER, type Level, type Period } from '../domain/types.ts';
+import { GENERATIONS, LEVELS, PERIODS, TYPE_ORDER, type Level, type Period } from '../domain/types.ts';
 import { EXERCISES } from '../exercises.ts';
 import { html, raw, type Fragment } from '../render/html.ts';
 
@@ -25,6 +25,8 @@ interface State {
   exercises: ExerciseChoice[];
   /** Selected Pokémon types; all selected by default. */
   types: Set<string>;
+  /** Selected generations; all selected by default. */
+  generations: Set<number>;
   legendaryOnly: boolean;
 }
 
@@ -40,12 +42,14 @@ const state: State = {
   answerKey: true,
   exercises: EXERCISES.map((exercise) => ({ id: exercise.id, enabled: true, count: 1 })),
   types: new Set(ALL_TYPES),
+  generations: new Set(GENERATIONS),
   legendaryOnly: false,
 };
 
 function currentPool() {
   const types = state.types.size === ALL_TYPES.length ? null : state.types;
-  return filterPokedex(POKEDEX, { types, legendaryOnly: state.legendaryOnly });
+  const generations = state.generations.size === GENERATIONS.length ? null : state.generations;
+  return filterPokedex(POKEDEX, { generations, types, legendaryOnly: state.legendaryOnly });
 }
 
 const ICON_MINUS = raw('<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>');
@@ -159,6 +163,17 @@ function renderTypeFilter(): Fragment {
   return html`
     <fieldset class="field">
       <legend class="field__label">Pokémon</legend>
+      <span class="field__sublabel">Générations</span>
+      <div class="gen-filter">
+        ${GENERATIONS.map(
+          (generation) => html`
+            <label class="gen-filter__opt">
+              <input type="checkbox" data-generation="${generation}" ${state.generations.has(generation) ? 'checked' : ''} />
+              <span>Gén. ${generation}</span>
+            </label>`,
+        )}
+      </div>
+      <span class="field__sublabel">Types</span>
       <div class="type-filter">
         ${ALL_TYPES.map(
           (type) => html`
@@ -272,6 +287,11 @@ export function mountApp(root: HTMLElement): void {
     } else if (target.dataset.type !== undefined) {
       if (target.checked) state.types.add(target.dataset.type);
       else state.types.delete(target.dataset.type);
+      rebuild = true;
+    } else if (target.dataset.generation !== undefined) {
+      const generation = Number(target.dataset.generation);
+      if (target.checked) state.generations.add(generation);
+      else state.generations.delete(generation);
       rebuild = true;
     } else if (target.dataset.exercise !== undefined) {
       const choice = state.exercises[Number(target.dataset.exercise)];
