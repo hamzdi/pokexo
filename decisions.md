@@ -77,3 +77,12 @@ Retour de Hamza sur l'env local : plutôt qu'« inclure », le bouton restreint 
 
 ## 2026-10-14 — Générations 1 à 4 embarquées, filtre par génération
 Tyradex couvre les neuf générations ; on s'arrête à la 4 (493 Pokémon) pour rester sous 6 Mo de page avec les sprites embarqués. La liste des légendaires est étendue à la main (35). Le script de données déduit la génération du numéro national quand il repart d'un ancien bundle.
+
+## 2026-10-14 — Disponibilité des exercices par niveau et période
+Certains exercices n'ont pas de sens à toutes les périodes (mesures en cm avant que les nombres dépassent 20, euros avant CP P4). Le registre porte une fonction `available(level, period)` ; l'interface grise l'exercice avec la mention « pas à cette période » et le pack l'ignore.
+
+## 2026-10-14 — Coloriage : contour généré côté client
+Le dessin à colorier est calculé dans le navigateur à partir du sprite (gris, flou, Sobel, seuil, épaississement), de préférence depuis le PNG 512 px de Tyradex quand il est joignable, sinon depuis le sprite embarqué. Pas de bibliothèque ni de serveur ; les résultats sont mis en cache par Pokémon le temps de la session.
+
+## 2026-10-14 — Suites du Pokédex hors filtre Pokémon
+Les suites ont besoin de tous les numéros consécutifs ; elles utilisent le Pokédex complet quel que soit le filtre de types ou de générations.

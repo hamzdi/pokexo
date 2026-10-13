@@ -8,7 +8,9 @@ import { filterPokedex, MIN_POOL } from '../domain/pool.ts';
 import { seedFromString } from '../domain/rng.ts';
 import { GENERATIONS, LEVELS, PERIODS, TYPE_ORDER, type Level, type Period } from '../domain/types.ts';
 import { EXERCISES } from '../exercises.ts';
+import { renderColoringSheet } from '../render/coloring.ts';
 import { html, raw, type Fragment } from '../render/html.ts';
+import { buildOutline } from '../render/outline.ts';
 
 interface ExerciseChoice {
   id: string;
@@ -16,7 +18,10 @@ interface ExerciseChoice {
   count: number;
 }
 
+type Tab = 'exercices' | 'coloriage';
+
 interface State {
+  tab: Tab;
   level: Level;
   period: Period;
   seed: string;
@@ -28,6 +33,9 @@ interface State {
   /** Selected generations; all selected by default. */
   generations: Set<number>;
   legendaryOnly: boolean;
+  /** Colouring tab: search text and chosen Pokémon id. */
+  coloringQuery: string;
+  coloringId: number | null;
 }
 
 const ALL_TYPES: readonly string[] = TYPE_ORDER.filter((type) => POKEDEX.some((p) => p.types.includes(type)));
@@ -35,6 +43,7 @@ const ALL_TYPES: readonly string[] = TYPE_ORDER.filter((type) => POKEDEX.some((p
 const MAX_COUNT = 6;
 
 const state: State = {
+  tab: 'exercices',
   level: 'CP',
   period: 1,
   seed: String(1000 + Math.floor(Math.random() * 9000)),
@@ -44,7 +53,82 @@ const state: State = {
   types: new Set(ALL_TYPES),
   generations: new Set(GENERATIONS),
   legendaryOnly: false,
+  coloringQuery: '',
+  coloringId: 25,
 };
+
+/** Outline data URLs by Pokémon id (building one takes a moment). */
+const outlineCache = new Map<number, string>();
+const outlinePending = new Set<number>();
+
+/** Accent- and case-insensitive match for the search box. */
+function normalize(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function coloringMatches(): typeof POKEDEX {
+  const q = normalize(state.coloringQuery.trim());
+  if (!q) return POKEDEX.slice(0, 12);
+  const byId = /^\d+$/.test(q) ? POKEDEX.filter((p) => String(p.id) === q) : [];
+  const starts = POKEDEX.filter((p) => normalize(p.name).startsWith(q));
+  const contains = POKEDEX.filter((p) => !starts.includes(p) && normalize(p.name).includes(q));
+  return [...byId, ...starts, ...contains].filter((p, i, arr) => arr.indexOf(p) === i).slice(0, 12);
+}
+
+function renderColoringPanel(): string {
+  const matches = coloringMatches();
+  return html`
+    <div class="field">
+      <label class="field__label" for="coloringQuery">Chercher un Pokémon</label>
+      <input id="coloringQuery" class="input" name="coloringQuery" value="${state.coloringQuery}" placeholder="Nom ou numéro" autocomplete="off" />
+      <span class="field__hint">${matches.length === 0 ? 'Aucun Pokémon ne correspond.' : 'Clique sur un Pokémon pour préparer son coloriage.'}</span>
+    </div>
+    <ul class="pick-list">
+      ${matches.map(
+        (p) => html`
+          <li>
+            <button type="button" class="pick ${p.id === state.coloringId ? 'is-active' : ''}" data-color="${p.id}">
+              <img class="pick__sprite" src="${p.sprite}" alt="" />
+              <span class="pick__name">${p.name}</span>
+              <span class="pick__id">n° ${p.id}</span>
+            </button>
+          </li>`,
+      )}
+    </ul>
+    <div class="field">
+      <label class="field__label" for="studentNameColoring">Prénom de l'élève</label>
+      <input id="studentNameColoring" class="input" name="studentName" value="${state.studentName}" placeholder="Laisser vide pour une ligne à remplir" />
+    </div>
+    <p class="app-hint">Le dessin est en noir et blanc, le petit modèle en haut reste en couleur.</p>`.html;
+}
+
+function renderColoringDesk(): string {
+  const pokemon = POKEDEX.find((p) => p.id === state.coloringId);
+  if (!pokemon) return html`<p class="empty">Choisis un Pokémon dans la liste.</p>`.html;
+  const outline = outlineCache.get(pokemon.id) ?? null;
+  return html`
+    <figure class="app-page" style="margin: 0">
+      <figcaption class="app-page__label"><span class="app-page__num">1</span>Coloriage : ${pokemon.name}</figcaption>
+      <div class="app-page__frame app-page__frame--62"><div class="app-page__scale app-page__scale--62">${raw(renderColoringSheet(pokemon, outline, state.studentName))}</div></div>
+    </figure>`.html;
+}
+
+/** Build the outline of the chosen Pokémon in the background, then re-render. */
+function ensureOutline(onReady: () => void): void {
+  const pokemon = POKEDEX.find((p) => p.id === state.coloringId);
+  if (!pokemon || outlineCache.has(pokemon.id) || outlinePending.has(pokemon.id)) return;
+  outlinePending.add(pokemon.id);
+  buildOutline({ fullRes: pokemon.spriteUrl, embedded: pokemon.sprite })
+    .then((dataUrl) => outlineCache.set(pokemon.id, dataUrl))
+    .catch(() => outlineCache.set(pokemon.id, pokemon.sprite))
+    .finally(() => {
+      outlinePending.delete(pokemon.id);
+      if (state.coloringId === pokemon.id) onReady();
+    });
+}
 
 function currentPool() {
   const types = state.types.size === ALL_TYPES.length ? null : state.types;
@@ -78,6 +162,7 @@ function buildPages(): Page[] {
   for (const choice of state.exercises) {
     const definition = EXERCISES.find((exercise) => exercise.id === choice.id);
     if (!choice.enabled || !definition) continue;
+    if (definition.available && !definition.available(state.level, state.period)) continue;
     for (let i = 0; i < choice.count; i++) {
       const seed = (baseSeed() + i) % 100000;
       try {
@@ -138,11 +223,12 @@ function renderExerciseList(): Fragment {
           ${EXERCISES.filter((exercise) => exercise.subject === subject).map((exercise) => {
             const index = state.exercises.findIndex((choice) => choice.id === exercise.id);
             const choice = state.exercises[index];
-            const on = choice?.enabled ?? false;
+            const available = !exercise.available || exercise.available(state.level, state.period);
+            const on = available && (choice?.enabled ?? false);
             const count = choice?.count ?? 1;
             return html`
-              <li class="ex-item ${on ? '' : 'is-off'}">
-                <label class="ex-check"><input type="checkbox" data-exercise="${index}" ${on ? 'checked' : ''} /><span class="ex-item__name">${exercise.label}</span></label>
+              <li class="ex-item ${on ? '' : 'is-off'} ${available ? '' : 'is-unavailable'}">
+                <label class="ex-check"><input type="checkbox" data-exercise="${index}" ${on ? 'checked' : ''} ${available ? '' : 'disabled'} /><span class="ex-item__name">${exercise.label}${available ? '' : html`<small class="ex-item__note">pas à cette période</small>`}</span></label>
                 <div class="stepper" role="group" aria-label="Nombre de fiches">
                   <button type="button" aria-label="Une fiche de moins" data-dec="${index}" ${!on || count <= 1 ? 'disabled' : ''}>${ICON_MINUS}</button>
                   <output>${on ? count : 0}</output>
@@ -194,7 +280,11 @@ function renderTypeFilter(): Fragment {
 }
 
 function totalSheets(): number {
-  return state.exercises.reduce((total, choice) => total + (choice.enabled ? choice.count : 0), 0);
+  return state.exercises.reduce((total, choice) => {
+    const definition = EXERCISES.find((exercise) => exercise.id === choice.id);
+    const available = !definition?.available || definition.available(state.level, state.period);
+    return total + (choice.enabled && available ? choice.count : 0);
+  }, 0);
 }
 
 function renderPanel(): string {
@@ -239,6 +329,10 @@ export function mountApp(root: HTMLElement): void {
     <div class="app">
       <header class="app-bar app-chrome">
         <div class="app-logo">${LOGO}<span>Pokexo</span><small>Fiches d'exercices CP · CE1</small></div>
+        <nav class="tabs" aria-label="Sections">
+          <button type="button" class="tab" data-tab="exercices">Exercices</button>
+          <button type="button" class="tab" data-tab="coloriage">Coloriage</button>
+        </nav>
         <a href="https://github.com/hamzdi/pokexo" style="font-size: 14px; font-weight: 500">GitHub</a>
       </header>
       <div class="app-body">
@@ -263,7 +357,19 @@ export function mountApp(root: HTMLElement): void {
   const meta = root.querySelector<HTMLElement>('#meta');
   if (!panel || !desk || !meta) throw new Error('App skeleton missing');
 
+  const actions = root.querySelector<HTMLElement>('.app-actions__group');
   const refresh = (rebuildPanel: boolean): void => {
+    for (const tab of root.querySelectorAll<HTMLButtonElement>('.tab')) tab.classList.toggle('is-active', tab.dataset.tab === state.tab);
+    if (state.tab === 'coloriage') {
+      if (rebuildPanel) panel.innerHTML = renderColoringPanel();
+      desk.innerHTML = renderColoringDesk();
+      const pokemon = POKEDEX.find((p) => p.id === state.coloringId);
+      meta.textContent = pokemon ? `Coloriage · ${pokemon.name} · 1 page A4` : 'Coloriage';
+      actions?.classList.add('app-actions__group--coloring');
+      ensureOutline(() => refresh(false));
+      return;
+    }
+    actions?.classList.remove('app-actions__group--coloring');
     if (rebuildPanel) panel.innerHTML = renderPanel();
     const pages = buildPages();
     desk.innerHTML = renderDesk(pages);
@@ -274,10 +380,29 @@ export function mountApp(root: HTMLElement): void {
   root.addEventListener('input', (event) => {
     const target = event.target as HTMLInputElement;
     let rebuild = false;
+    if (target.name === 'coloringQuery') {
+      state.coloringQuery = target.value;
+      const matches = coloringMatches();
+      if (matches.length > 0 && !matches.some((p) => p.id === state.coloringId)) state.coloringId = matches[0]?.id ?? null;
+      // Keep focus in the search box while the list below refreshes.
+      const list = panel.querySelector('.pick-list');
+      const hint = panel.querySelector('.field__hint');
+      if (list && hint) {
+        const fresh = document.createElement('div');
+        fresh.innerHTML = renderColoringPanel();
+        list.replaceWith(fresh.querySelector('.pick-list') as Element);
+        hint.replaceWith(fresh.querySelector('.field__hint') as Element);
+      }
+      refresh(false);
+      return;
+    }
     if (target.name === 'level') {
       state.level = target.value as Level;
       rebuild = true;
-    } else if (target.name === 'period') state.period = Number(target.value) as Period;
+    } else if (target.name === 'period') {
+      state.period = Number(target.value) as Period;
+      rebuild = true;
+    }
     else if (target.name === 'seed') state.seed = target.value;
     else if (target.name === 'studentName') state.studentName = target.value;
     else if (target.name === 'answerKey') state.answerKey = target.checked;
@@ -304,6 +429,16 @@ export function mountApp(root: HTMLElement): void {
   root.addEventListener('click', (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button');
     if (!button) return;
+    if (button.dataset.tab) {
+      state.tab = button.dataset.tab as Tab;
+      refresh(true);
+      return;
+    }
+    if (button.dataset.color) {
+      state.coloringId = Number(button.dataset.color);
+      refresh(true);
+      return;
+    }
     if (button.dataset.action === 'print') {
       window.print();
       return;
