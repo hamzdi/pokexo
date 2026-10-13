@@ -65,3 +65,12 @@ Tyradex n'expose pas de drapeau « légendaire » ; la liste est codée dans le 
 
 ## 2026-10-13 — Manche super efficace : badge ×2 et ligne teintée, cartes de combat élargies
 Le libellé « Super efficace ! » sur deux lignes faisait déborder les combats où toutes les manches sont ×2 (Dragon contre Dragon). Remplacé par un badge « ×2 » après le nom de l'attaque et un fond orangé de ligne, expliqués dans les règles. Cartes de combat élargies (CP 70 mm, CE1 58 mm) pour que les noms d'attaques restent sur une ligne, suggestion de Hamza.
+
+## 2026-10-14 — PV réels dès le CP P3, PV fixes avant
+Demande de Hamza : les PV changeaient d'une fiche à l'autre et ne correspondaient pas à Tyradex. Désormais : CP P3-P5 et CE1 utilisent la statistique PV réelle, en ne tirant que les Pokémon sous le plafond de la période (59, 79, 99, puis 100, 200, 255) ; CP P1-P2 gardent une mise à l'échelle déterministe (un Pokémon a toujours les mêmes PV pour une période) et portent la mention « PV adaptés au niveau ». Plus aucun ajustement de PV ni aléa : le « sans retenue » en CP est obtenu en filtrant les paires faisables et en autorisant des dégâts en dizaines entières (10, 20, 30) à partir de P3, car la plupart des PV réels finissent par 0 ou 5. Plafond CP P5 à 99 car 100 − 30 exige une retenue.
+
+## 2026-10-14 — Aucun premier coup létal
+Chaque camp doit disposer d'une attaque qui ne met pas l'adversaire KO en un coup, même doublée ; les Pokémon trop faibles pour la période sont écartés (ex. Abra en CE1 P2, Pichu en CE1 P3).
+
+## 2026-10-14 — Interrupteur « Exclusivement Pokémon légendaires »
+Retour de Hamza sur l'env local : plutôt qu'« inclure », le bouton restreint aux onze légendaires. Éteint par défaut (tous les Pokémon). En CP, le panneau prévient que leurs PV réels (90 à 115) dépassent les nombres du niveau. Vivier minimum abaissé à 10 pour que le mode légendaires ne soit pas complété par d'autres Pokémon.

@@ -2,11 +2,13 @@
  * "Qui gagne ?" exercise: several duels where the child compares the PV of two
  * Pokémon (circle the stronger one, write < > =, and from CE1 compute the gap).
  */
-import { scaleHp } from './pedagogy.ts';
+import { pvFor } from './pedagogy.ts';
 import { createRng, seedFromString } from './rng.ts';
 import type { Level, Period, PokemonData } from './types.ts';
 
 export interface CompareRules {
+  /** Use the real HP stat (filtered by pvMax) instead of a scaled value. */
+  realPv: boolean;
   pvMin: number;
   pvMax: number;
   duels: number;
@@ -20,18 +22,18 @@ export interface CompareRules {
 
 export const COMPARE_RULES: Record<Level, Record<Period, CompareRules>> = {
   CP: {
-    1: { pvMin: 1, pvMax: 10, duels: 3, askSign: false, askGap: false, allowTie: false },
-    2: { pvMin: 1, pvMax: 20, duels: 4, askSign: true, askGap: false, allowTie: true },
-    3: { pvMin: 5, pvMax: 39, duels: 4, askSign: true, askGap: false, allowTie: true },
-    4: { pvMin: 10, pvMax: 79, duels: 4, askSign: true, askGap: false, allowTie: true },
-    5: { pvMin: 10, pvMax: 100, duels: 4, askSign: true, askGap: false, allowTie: true },
+    1: { realPv: false, pvMin: 1, pvMax: 10, duels: 3, askSign: false, askGap: false, allowTie: false },
+    2: { realPv: false, pvMin: 1, pvMax: 20, duels: 4, askSign: true, askGap: false, allowTie: true },
+    3: { realPv: true, pvMin: 10, pvMax: 59, duels: 4, askSign: true, askGap: false, allowTie: true },
+    4: { realPv: true, pvMin: 10, pvMax: 79, duels: 4, askSign: true, askGap: false, allowTie: true },
+    5: { realPv: true, pvMin: 10, pvMax: 100, duels: 4, askSign: true, askGap: false, allowTie: true },
   },
   CE1: {
-    1: { pvMin: 10, pvMax: 100, duels: 4, askSign: true, askGap: false, allowTie: true },
-    2: { pvMin: 10, pvMax: 200, duels: 4, askSign: true, askGap: true, allowTie: true },
-    3: { pvMin: 50, pvMax: 500, duels: 4, askSign: true, askGap: true, allowTie: true },
-    4: { pvMin: 100, pvMax: 999, duels: 4, askSign: true, askGap: true, allowTie: true },
-    5: { pvMin: 100, pvMax: 999, duels: 5, askSign: true, askGap: true, allowTie: true },
+    1: { realPv: true, pvMin: 10, pvMax: 100, duels: 4, askSign: true, askGap: false, allowTie: true },
+    2: { realPv: true, pvMin: 10, pvMax: 200, duels: 4, askSign: true, askGap: true, allowTie: true },
+    3: { realPv: true, pvMin: 10, pvMax: 255, duels: 4, askSign: true, askGap: true, allowTie: true },
+    4: { realPv: true, pvMin: 10, pvMax: 255, duels: 4, askSign: true, askGap: true, allowTie: true },
+    5: { realPv: true, pvMin: 10, pvMax: 255, duels: 5, askSign: true, askGap: true, allowTie: true },
   },
 };
 
@@ -62,23 +64,37 @@ export interface CompareOptions {
   pokedex: readonly PokemonData[];
 }
 
-const TIE_PROBABILITY = 0.2;
-
 export function generateCompare({ level, period, seed, pokedex }: CompareOptions): CompareExercise {
   const rules = COMPARE_RULES[level][period];
   const rng = createRng(seedFromString(`compare:${seed}`));
-  const pool = rng.shuffle(pokedex).slice(0, rules.duels * 2);
+  // PV are fixed per Pokémon and period: real HP when the period allows it, else a scaled value.
+  const all = pokedex.map((pokemon) => ({ pokemon, pv: pvFor(pokemon.hp, rules) }));
+  const fitting = all.filter((c) => c.pv >= rules.pvMin && c.pv <= rules.pvMax);
+  // A narrow user filter may leave too few Pokémon under the period ceiling: pad with the nearest PV.
+  const needed = rules.duels * 2 + 2;
+  const extras = all
+    .filter((c) => !fitting.includes(c))
+    .sort((x, y) => Math.abs(x.pv - rules.pvMax) - Math.abs(y.pv - rules.pvMax) || x.pokemon.id - y.pokemon.id)
+    .slice(0, Math.max(0, needed - fitting.length));
+  const pool = rng.shuffle([...fitting, ...extras]);
   const duels: Duel[] = [];
+  let cursor = 0;
+  const next = () => {
+    const c = pool[cursor++];
+    if (!c) throw new Error('Pokedex too small for the requested number of duels');
+    return c;
+  };
 
   for (let i = 0; i < rules.duels; i++) {
-    const pa = pool[i * 2];
-    const pb = pool[i * 2 + 1];
-    if (!pa || !pb) throw new Error('Pokedex too small for the requested number of duels');
-    // Scaled PV keep the real strength order; a small jitter avoids repeated values.
-    const pvA = clamp(scaleHp(pa.hp, rules) + rng.int(-2, 2), rules);
-    let pvB = clamp(scaleHp(pb.hp, rules) + rng.int(-2, 2), rules);
-    if (rules.allowTie && rng.next() < TIE_PROBABILITY) pvB = pvA;
-    else if (!rules.allowTie && pvB === pvA) pvB = pvA < rules.pvMax ? pvA + 1 : pvA - 1;
+    const a = next();
+    let b = next();
+    // Without ties allowed, skip opponents with the same PV (the skipped one is simply unused).
+    let guard = 0;
+    while (!rules.allowTie && b.pv === a.pv && guard++ < 10) b = next();
+    const pa = a.pokemon;
+    const pb = b.pokemon;
+    const pvA = a.pv;
+    const pvB = b.pv;
 
     const sign: Sign = pvA === pvB ? '=' : pvA > pvB ? '>' : '<';
     duels.push({
@@ -90,8 +106,4 @@ export function generateCompare({ level, period, seed, pokedex }: CompareOptions
     });
   }
   return { kind: 'compare', level, period, seed, rules, duels };
-}
-
-function clamp(value: number, rules: CompareRules): number {
-  return Math.min(rules.pvMax, Math.max(rules.pvMin, value));
 }

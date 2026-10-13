@@ -56,7 +56,7 @@ describe('generateCompare', () => {
   });
 
   it('produces ties sometimes when allowed', () => {
-    // GIVEN many CE1 period 1 exercises
+    // GIVEN many CE1 period 1 exercises (real HP, many Pokémon share 40, 45 or 50)
     let ties = 0;
     for (const seed of SEEDS) {
       const ex = generateCompare({ level: 'CE1', period: 1, seed, pokedex: POKEDEX });
@@ -65,5 +65,28 @@ describe('generateCompare', () => {
     // WHEN counting equal duels
     // THEN at least one "=" appears
     expect(ties).toBeGreaterThan(0);
+  });
+
+  it('prints real HP from CP period 3 and fixed scaled PV before', () => {
+    // GIVEN CP period 3 and CP period 1 exercises
+    for (const seed of SEEDS) {
+      const real = generateCompare({ level: 'CP', period: 3, seed, pokedex: POKEDEX });
+      // WHEN inspecting the duels
+      // THEN PV equal the HP stat and stay under the ceiling
+      for (const duel of real.duels) {
+        expect(duel.a.pv).toBe(duel.a.pokemon.hp);
+        expect(duel.b.pv).toBe(duel.b.pokemon.hp);
+        expect(duel.a.pv).toBeLessThanOrEqual(59);
+      }
+    }
+    const seen = new Map<number, number>();
+    for (const seed of SEEDS) {
+      const ex = generateCompare({ level: 'CP', period: 1, seed, pokedex: POKEDEX });
+      for (const side of ex.duels.flatMap((d) => [d.a, d.b])) {
+        const previous = seen.get(side.pokemon.id);
+        if (previous !== undefined) expect(side.pv).toBe(previous);
+        seen.set(side.pokemon.id, side.pv);
+      }
+    }
   });
 });
