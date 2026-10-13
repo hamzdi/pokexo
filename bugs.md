@@ -16,3 +16,6 @@ Le paragraphe de règle supplémentaire faisait déborder les fiches CP déjà d
 
 ## 2026-10-13 — Sprites manquants sur certaines fiches (corrigé)
 Signalé par Hamza sur « Combat » et « Qui a le plus de PV ? ». Les 251 URL répondaient en 200 : le problème venait du chargement simultané de dizaines d'images distantes (lenteur ou refus temporaire de GitHub), pas de Pokémon sans image. Corrigé en embarquant les sprites dans le bundle.
+
+## 2026-10-13 — Débordement des cartes avec attaques Dragon et Fée (corrigé)
+Révélé par le filtre « Dragon seul » : « Souffle du dragon » et « Étincelle magique » passaient sur deux lignes dans les cartes. Noms remplacés par des attaques réelles plus courtes (Draco-Souffle, Draco-Griffe, Éclat magique, Câlinerie) et retour à la ligne interdit dans la liste des attaques.

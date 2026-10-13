@@ -56,3 +56,12 @@ L'étiquette porte le sprite et le nom imprimé ; dans la copie en cursive, le n
 
 ## 2026-10-13 — Sprites embarqués dans le bundle (WebP 192 px, data URI)
 Les sprites Tyradex (PNG 512 px, ~125 Ko) chargés à la volée depuis GitHub laissaient des cases vides à l'affichage et à l'impression quand des dizaines d'images partaient en même temps. Ils sont désormais réduits par `sharp` au build de données et inlinés : page de 2,8 Mo, aucune requête image à l'exécution, impression fiable et hors ligne. L'URL d'origine reste dans `spriteUrl` pour l'attribution.
+
+## 2026-10-13 — Filtre de Pokémon global, avec vivier minimum de 12
+Le filtre par types et l'exclusion des légendaires s'appliquent à toutes les fiches, pas seulement au combat : plus simple à comprendre et cohérent sur un pack. Si moins de 12 Pokémon correspondent, le vivier est complété avec d'autres Pokémon et l'interface le signale, pour que duels, grille et dictée restent générables. Le filtre n'est pas encodé dans le numéro de fiche.
+
+## 2026-10-13 — Légendaires : liste fixe des 11 Pokémon de gen 1-2
+Tyradex n'expose pas de drapeau « légendaire » ; la liste est codée dans le script de données.
+
+## 2026-10-13 — Manche super efficace : badge ×2 et ligne teintée, cartes de combat élargies
+Le libellé « Super efficace ! » sur deux lignes faisait déborder les combats où toutes les manches sont ×2 (Dragon contre Dragon). Remplacé par un badge « ×2 » après le nom de l'attaque et un fond orangé de ligne, expliqués dans les règles. Cartes de combat élargies (CP 70 mm, CE1 58 mm) pour que les noms d'attaques restent sur une ligne, suggestion de Hamza.

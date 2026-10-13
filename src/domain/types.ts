@@ -25,4 +25,12 @@ export interface PokemonData {
   speed: number;
   preId: number | null;
   nextId: number | null;
+  /** Legendary or mythical Pokémon, which some teachers prefer to leave out. */
+  legendary: boolean;
 }
+
+/** The 18 types in the usual order. */
+export const TYPE_ORDER: readonly string[] = [
+  'Normal', 'Feu', 'Eau', 'Plante', 'Électrik', 'Glace', 'Combat', 'Poison', 'Sol',
+  'Vol', 'Psy', 'Insecte', 'Roche', 'Spectre', 'Dragon', 'Ténèbres', 'Acier', 'Fée',
+];
