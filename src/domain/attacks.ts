@@ -17,10 +17,10 @@ export const ATTACKS_BY_TYPE: Record<string, [string, string]> = {
   Insecte: ['Piqûre', 'Toile'],
   Roche: ['Jet de pierres', 'Éboulement'],
   Spectre: ['Ombre', 'Léchouille'],
-  Dragon: ['Souffle du dragon', 'Griffe dragon'],
+  Dragon: ['Draco-Souffle', 'Draco-Griffe'],
   Ténèbres: ['Morsure', 'Croc de nuit'],
   Acier: ['Griffe d’acier', 'Queue de fer'],
-  Fée: ['Étincelle magique', 'Bisou magique'],
+  Fée: ['Éclat magique', 'Câlinerie'],
 };
 
 export function attackNamesFor(type: string): [string, string] {

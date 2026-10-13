@@ -16,6 +16,7 @@ body { margin: 0; }
 .answer--plain { text-decoration: none; }
 
 /* ---- Combat sheet ---- */
+.pk-card__moves li span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rules { margin: 0; padding-left: 6mm; font-size: calc(var(--fs-body) * 0.78); line-height: 1.45; }
 .arena { display: flex; align-items: center; justify-content: center; gap: 8mm; }
 .vs { font: 800 22px var(--font-ui); color: var(--px-ink-2); }
@@ -42,7 +43,9 @@ body { margin: 0; }
 .who__sprite { width: 9mm; height: 9mm; object-fit: contain; }
 .row-potion td { background: var(--px-tint); }
 .potion { font-weight: 700; }
-.super { display: block; font: 700 10px var(--font-ui); color: var(--px-ink-2); margin-top: .5mm; }
+.super { display: inline-grid; place-items: center; min-width: 7mm; height: 6mm; padding: 0 1.5mm; border-radius: 999px; border: 1.5px solid var(--px-ink); font: 700 11px var(--font-ui); vertical-align: middle; margin-left: 1mm; background: #fff; }
+.row-super td { background: #FBEBD6; }
+.col-attack { white-space: nowrap; }
 .questions { display: flex; flex-direction: column; gap: 2mm; }
 .sheet--ce1 .questions { flex-direction: row; flex-wrap: wrap; gap: 3mm 10mm; }
 .sheet--ce1 .questions .box { height: 9mm; }
@@ -92,6 +95,16 @@ body { margin: 0; }
 .teacher p { margin: 0; }
 
 /* ---- App shell additions ---- */
+.type-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+.type-filter__opt { position: relative; cursor: pointer; }
+.type-filter__opt input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.type-filter__opt .pk-type { font-size: 12px; padding: 4px 10px 4px 7px; opacity: .38; filter: grayscale(.6); transition: opacity .12s, filter .12s; }
+.type-filter__opt input:checked + .pk-type { opacity: 1; filter: none; }
+.type-filter__opt input:focus-visible + .pk-type { outline: 2px solid var(--px-accent); outline-offset: 2px; }
+.type-filter__actions { display: flex; gap: 14px; }
+.link { border: 0; background: none; padding: 0; font: 500 13px var(--font-ui); color: var(--px-accent); cursor: pointer; min-height: 32px; }
+.link:hover { text-decoration: underline; }
+.field__hint--warn { color: #9a4b00; font-weight: 500; }
 .app-panel__subject { font: 600 12px var(--font-ui); color: var(--px-ink-2); text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px 2px; background: var(--px-tint); }
 .ex-list .app-panel__subject + .ex-item { border-top: 0; }
 .app-page__frame--62 .sheet { transform-origin: top left; }
@@ -153,3 +166,6 @@ body { margin: 0; }
 .coord-list .answer-line { min-width: 18mm; }
 .coord-list .answer { display: inline-block; min-width: 16mm; text-align: center; }
 .coord-list li > span:last-child { white-space: nowrap; }
+/* Wider combat cards so move names stay on one line. */
+.sheet--cp .arena .pk-card { --card-w: 70mm; }
+.sheet--ce1 .arena .pk-card { --card-w: 58mm; }

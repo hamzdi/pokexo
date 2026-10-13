@@ -15,6 +15,8 @@ import sharp from 'sharp';
 const USER_AGENT = 'pokexo/0.1 (https://github.com/hamzdi/pokexo; hamza.diouane@try-it.fr)';
 const GENERATIONS = [1, 2];
 const OUTPUT = resolve(import.meta.dirname, '../src/data/pokemon.json');
+/** Legendary and mythical Pokémon of generations 1 and 2 (Tyradex has no explicit flag). */
+const LEGENDARY_IDS = new Set([144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251]);
 const SPRITE_SIZE = 192;
 const SPRITE_QUALITY = 82;
 const CONCURRENCY = 8;
@@ -90,6 +92,7 @@ interface BundleEntry {
   speed: number;
   preId: number | null;
   nextId: number | null;
+  legendary: boolean;
 }
 
 /** Metadata from the API, or from the committed bundle when the API is unreachable. */
@@ -114,6 +117,7 @@ async function loadMetadata(): Promise<Omit<BundleEntry, 'sprite'>[]> {
         speed: (p.stats as { vit: number }).vit,
         preId: p.evolution?.pre?.[0]?.pokedex_id ?? null,
         nextId: p.evolution?.next?.[0]?.pokedex_id ?? null,
+        legendary: LEGENDARY_IDS.has(p.pokedex_id),
       }))
       .sort((a, b) => a.id - b.id);
   } catch (error) {
@@ -122,6 +126,7 @@ async function loadMetadata(): Promise<Omit<BundleEntry, 'sprite'>[]> {
     const previous = JSON.parse(await readFile(OUTPUT, 'utf8')) as (BundleEntry & { spriteUrl?: string })[];
     return previous.map(({ sprite, spriteUrl, ...rest }) => ({
       ...rest,
+      legendary: LEGENDARY_IDS.has(rest.id),
       spriteUrl: spriteUrl ?? (sprite.startsWith('data:') ? `https://raw.githubusercontent.com/Yarkis01/TyraDex/images/sprites/${rest.id}/regular.png` : sprite),
     }));
   }

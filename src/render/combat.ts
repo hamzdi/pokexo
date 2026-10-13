@@ -41,12 +41,12 @@ function renderAttackRow(row: AttackRow, ex: CombatExercise, options: SheetOptio
     damageCell = row.multiplier === 2 ? html`${row.baseDamage} × 2 = ${answerBox(row.damage, options, 'box--sm')}` : html`${row.damage}`;
   }
   return html`
-    <tr class="row-attack">
+    <tr class="row-attack ${row.multiplier === 2 ? 'row-super' : ''}">
       <td class="col-round">${row.round}</td>
       <td class="col-attacker">
         <span class="who"><img class="who__sprite" src="${attacker.pokemon.sprite}" alt="" />${attacker.pokemon.name}</span>
       </td>
-      <td class="col-attack">${row.attackName}${row.multiplier === 2 ? html`<span class="super">Super efficace !</span>` : ''}</td>
+      <td class="col-attack">${row.attackName}${row.multiplier === 2 ? html` <span class="super" title="Super efficace">×2</span>` : ''}</td>
       <td class="col-damage">${damageCell}</td>
       <td class="col-pv">
         <span class="col-pv__who">${defender.pokemon.name}</span>
@@ -76,7 +76,7 @@ function renderRules(ex: CombatExercise, hidden?: readonly number[]): Fragment {
     'Quand il reçoit une attaque, il perd autant de PV que les <strong>dégâts</strong> écrits sur la carte.',
     "S'il arrive à 0 PV, il est <strong>KO</strong> et le combat s'arrête.",
   ];
-  if (ex.rules.superEffective) lines.push("Si l'attaque est <strong>super efficace</strong>, les dégâts sont doublés (× 2).");
+  if (ex.rules.superEffective) lines.push('Manche sur fond orangé avec <strong>×2</strong> : l\u2019attaque est <strong>super efficace</strong>, les dégâts sont doublés.');
   if (ex.rules.potions) lines.push('Une <strong>potion</strong> redonne des PV.');
   if (hidden) lines.push('<strong>Manche mystère :</strong> les PV restants sont écrits, retrouve les dégâts (PV avant − PV après).');
   return html`<ul class="rules">${lines.map((line) => html`<li>${raw(line)}</li>`)}</ul>`;

@@ -2,8 +2,11 @@
  * Generator screen (shell from the Claude Design mockup): settings panel on the
  * left, action bar and scaled A4 previews on the right, browser print for PDF.
  */
+import { typeSlug } from '../domain/attacks.ts';
+import { POKEDEX } from '../domain/pokedex.ts';
+import { filterPokedex, MIN_POOL } from '../domain/pool.ts';
 import { seedFromString } from '../domain/rng.ts';
-import { LEVELS, PERIODS, type Level, type Period } from '../domain/types.ts';
+import { LEVELS, PERIODS, TYPE_ORDER, type Level, type Period } from '../domain/types.ts';
 import { EXERCISES } from '../exercises.ts';
 import { html, raw, type Fragment } from '../render/html.ts';
 
@@ -20,7 +23,12 @@ interface State {
   studentName: string;
   answerKey: boolean;
   exercises: ExerciseChoice[];
+  /** Selected Pokémon types; all selected by default. */
+  types: Set<string>;
+  includeLegendary: boolean;
 }
+
+const ALL_TYPES: readonly string[] = TYPE_ORDER.filter((type) => POKEDEX.some((p) => p.types.includes(type)));
 
 const MAX_COUNT = 6;
 
@@ -31,7 +39,14 @@ const state: State = {
   studentName: '',
   answerKey: true,
   exercises: EXERCISES.map((exercise) => ({ id: exercise.id, enabled: true, count: 1 })),
+  types: new Set(ALL_TYPES),
+  includeLegendary: true,
 };
+
+function currentPool() {
+  const types = state.types.size === ALL_TYPES.length ? null : state.types;
+  return filterPokedex(POKEDEX, { types, includeLegendary: state.includeLegendary });
+}
 
 const ICON_MINUS = raw('<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>');
 const ICON_PLUS = raw('<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>');
@@ -55,12 +70,13 @@ interface Page {
 function buildPages(): Page[] {
   const sheets: Page[] = [];
   const keys: Page[] = [];
+  const { pool } = currentPool();
   for (const choice of state.exercises) {
     const definition = EXERCISES.find((exercise) => exercise.id === choice.id);
     if (!choice.enabled || !definition) continue;
     for (let i = 0; i < choice.count; i++) {
       const seed = (baseSeed() + i) % 100000;
-      const rendered = definition.render(state.level, state.period, seed, { studentName: state.studentName });
+      const rendered = definition.render(state.level, state.period, seed, { studentName: state.studentName }, pool);
       sheets.push({ label: definition.label, answerKey: false, markup: rendered.sheet });
       if (state.answerKey) keys.push({ label: definition.label, answerKey: true, markup: rendered.answerKey });
     }
@@ -119,6 +135,33 @@ function renderExerciseList(): Fragment {
     </ul>`;
 }
 
+function renderTypeFilter(): Fragment {
+  const { matching, padded } = currentPool();
+  const hint =
+    padded > 0
+      ? html`<span class="field__hint field__hint--warn">Seulement ${matching} Pokémon correspondent : ${padded} autres sont ajoutés pour atteindre ${MIN_POOL}.</span>`
+      : html`<span class="field__hint">${matching} Pokémon disponibles.</span>`;
+  return html`
+    <fieldset class="field">
+      <legend class="field__label">Pokémon</legend>
+      <div class="type-filter">
+        ${ALL_TYPES.map(
+          (type) => html`
+            <label class="type-filter__opt">
+              <input type="checkbox" data-type="${type}" ${state.types.has(type) ? 'checked' : ''} />
+              <span class="pk-type pk-type--${typeSlug(type)}">${type}</span>
+            </label>`,
+        )}
+      </div>
+      <div class="type-filter__actions">
+        <button type="button" class="link" data-action="types-all">Tous les types</button>
+        <button type="button" class="link" data-action="types-none">Aucun</button>
+      </div>
+      <label class="switch"><input type="checkbox" name="includeLegendary" ${state.includeLegendary ? 'checked' : ''} /><span>Inclure les légendaires</span></label>
+      ${hint}
+    </fieldset>`;
+}
+
 function totalSheets(): number {
   return state.exercises.reduce((total, choice) => total + (choice.enabled ? choice.count : 0), 0);
 }
@@ -139,6 +182,7 @@ function renderPanel(): string {
       ${renderExerciseList()}
       <div class="ex-total"><span>Total</span><strong>${total} ${total > 1 ? 'fiches' : 'fiche'}</strong></div>
     </fieldset>
+    ${renderTypeFilter()}
     <div class="field">
       <label class="field__label" for="seed">Numéro de fiche</label>
       <div class="input-row">
@@ -204,7 +248,14 @@ export function mountApp(root: HTMLElement): void {
     else if (target.name === 'seed') state.seed = target.value;
     else if (target.name === 'studentName') state.studentName = target.value;
     else if (target.name === 'answerKey') state.answerKey = target.checked;
-    else if (target.dataset.exercise !== undefined) {
+    else if (target.name === 'includeLegendary') {
+      state.includeLegendary = target.checked;
+      rebuild = true;
+    } else if (target.dataset.type !== undefined) {
+      if (target.checked) state.types.add(target.dataset.type);
+      else state.types.delete(target.dataset.type);
+      rebuild = true;
+    } else if (target.dataset.exercise !== undefined) {
       const choice = state.exercises[Number(target.dataset.exercise)];
       if (choice) choice.enabled = target.checked;
       rebuild = true;
@@ -221,6 +272,11 @@ export function mountApp(root: HTMLElement): void {
     }
     if (button.dataset.action === 'shuffle') {
       state.seed = String(1000 + Math.floor(Math.random() * 9000));
+      refresh(true);
+      return;
+    }
+    if (button.dataset.action === 'types-all' || button.dataset.action === 'types-none') {
+      state.types = new Set(button.dataset.action === 'types-all' ? ALL_TYPES : []);
       refresh(true);
       return;
     }
