@@ -19,3 +19,4 @@
 - Itération 8 (branche `feat/real-pv`) : PV réels Tyradex dès le CP P3 (plafonds 59 / 79 / 99 puis 100, 200, 255 en CE1), PV fixes par Pokémon et période en CP P1-P2 (sans ajustement ni aléa), paires de combat filtrées sur leur faisabilité sans retenue, dégâts en dizaines entières en CP P3-P5, comparaison sans aléa, mention « PV adaptés au niveau » sur les fiches CP P1-P2. 45 tests verts.
 - PR #7 fusionnée (PV réels dès CP P3, PV fixes, mode légendaires exclusif), Pages redéployé.
 - Itération 9 (branche `feat/generations-1-4`) : bundle étendu aux générations 1 à 4 (493 Pokémon, 35 légendaires, page de 5,4 Mo), champ génération, filtre « Générations » dans le bloc Pokémon. 46 tests verts.
+- PR #8 fusionnée (générations 1 à 4, filtre par génération), Pages redéployé.
