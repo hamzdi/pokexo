@@ -9,6 +9,8 @@ export const PERIODS: readonly Period[] = [1, 2, 3, 4, 5];
 /** One Pokémon as stored in the local bundle built from Tyradex. */
 export interface PokemonData {
   id: number;
+  /** National Pokédex generation (1 to 4 in the bundle). */
+  generation: number;
   name: string;
   category: string;
   /** Original Tyradex sprite URL (attribution, rebuilds). */
@@ -28,6 +30,9 @@ export interface PokemonData {
   /** Legendary or mythical Pokémon, which some teachers prefer to leave out. */
   legendary: boolean;
 }
+
+/** Generations shipped in the bundle. */
+export const GENERATIONS: readonly number[] = [1, 2, 3, 4];
 
 /** The 18 types in the usual order. */
 export const TYPE_ORDER: readonly string[] = [

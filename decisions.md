@@ -74,3 +74,6 @@ Chaque camp doit disposer d'une attaque qui ne met pas l'adversaire KO en un cou
 
 ## 2026-10-14 — Interrupteur « Exclusivement Pokémon légendaires »
 Retour de Hamza sur l'env local : plutôt qu'« inclure », le bouton restreint aux onze légendaires. Éteint par défaut (tous les Pokémon). En CP, le panneau prévient que leurs PV réels (90 à 115) dépassent les nombres du niveau. Vivier minimum abaissé à 10 pour que le mode légendaires ne soit pas complété par d'autres Pokémon.
+
+## 2026-10-14 — Générations 1 à 4 embarquées, filtre par génération
+Tyradex couvre les neuf générations ; on s'arrête à la 4 (493 Pokémon) pour rester sous 6 Mo de page avec les sprites embarqués. La liste des légendaires est étendue à la main (35). Le script de données déduit la génération du numéro national quand il repart d'un ancien bundle.

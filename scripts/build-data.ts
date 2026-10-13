@@ -13,16 +13,31 @@ import { dirname, resolve } from 'node:path';
 import sharp from 'sharp';
 
 const USER_AGENT = 'pokexo/0.1 (https://github.com/hamzdi/pokexo; hamza.diouane@try-it.fr)';
-const GENERATIONS = [1, 2];
+const GENERATIONS = [1, 2, 3, 4];
 const OUTPUT = resolve(import.meta.dirname, '../src/data/pokemon.json');
-/** Legendary and mythical Pokémon of generations 1 and 2 (Tyradex has no explicit flag). */
-const LEGENDARY_IDS = new Set([144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251]);
+/** Legendary and mythical Pokémon of generations 1 to 4 (Tyradex has no explicit flag). */
+const LEGENDARY_IDS = new Set([
+  144, 145, 146, 150, 151, // gen 1
+  243, 244, 245, 249, 250, 251, // gen 2
+  377, 378, 379, 380, 381, 382, 383, 384, 385, 386, // gen 3
+  480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, // gen 4
+]);
+
+/** Generation from the national Pokédex number, for bundles built before the field existed. */
+function generationOf(id: number): number {
+  if (id <= 151) return 1;
+  if (id <= 251) return 2;
+  if (id <= 386) return 3;
+  if (id <= 493) return 4;
+  return 5;
+}
 const SPRITE_SIZE = 192;
 const SPRITE_QUALITY = 82;
 const CONCURRENCY = 8;
 
 interface TyradexPokemon {
   pokedex_id: number;
+  generation: number;
   category: string;
   name: { fr: string };
   sprites: { regular: string | null };
@@ -77,6 +92,7 @@ async function mapLimit<T, R>(items: T[], limit: number, task: (item: T) => Prom
 
 interface BundleEntry {
   id: number;
+  generation: number;
   name: string;
   category: string;
   /** Original Tyradex sprite URL, kept for attribution and rebuilds. */
@@ -103,6 +119,7 @@ async function loadMetadata(): Promise<Omit<BundleEntry, 'sprite'>[]> {
       .filter((p) => p.pokedex_id > 0 && p.sprites.regular && p.types && p.stats && p.resistances)
       .map((p) => ({
         id: p.pokedex_id,
+        generation: p.generation ?? generationOf(p.pokedex_id),
         name: p.name.fr,
         category: p.category,
         spriteUrl: p.sprites.regular as string,
@@ -123,9 +140,10 @@ async function loadMetadata(): Promise<Omit<BundleEntry, 'sprite'>[]> {
   } catch (error) {
     if (!existsSync(OUTPUT)) throw error;
     console.warn(`Tyradex API unreachable (${(error as Error).message}); reusing metadata from ${OUTPUT}`);
-    const previous = JSON.parse(await readFile(OUTPUT, 'utf8')) as (BundleEntry & { spriteUrl?: string })[];
+    const previous = JSON.parse(await readFile(OUTPUT, 'utf8')) as (BundleEntry & { spriteUrl?: string; generation?: number })[];
     return previous.map(({ sprite, spriteUrl, ...rest }) => ({
       ...rest,
+      generation: rest.generation ?? generationOf(rest.id),
       legendary: LEGENDARY_IDS.has(rest.id),
       spriteUrl: spriteUrl ?? (sprite.startsWith('data:') ? `https://raw.githubusercontent.com/Yarkis01/TyraDex/images/sprites/${rest.id}/regular.png` : sprite),
     }));
