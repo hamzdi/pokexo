@@ -4,12 +4,19 @@
  */
 import { generateCombat } from './domain/combat.ts';
 import { generateCompare } from './domain/compare.ts';
+import { generateCoord } from './domain/coord.ts';
 import { generateDictee } from './domain/dictee.ts';
+import { generateIdentity } from './domain/identity.ts';
+import { generateMystery } from './domain/mystery.ts';
+import { generateScramble } from './domain/scramble.ts';
 import { POKEDEX } from './domain/pokedex.ts';
 import type { Level, Period } from './domain/types.ts';
-import { renderCombatSheet, type SheetOptions } from './render/combat.ts';
+import { renderCombatSheet, renderMysterySheet, type SheetOptions } from './render/combat.ts';
+import { renderCoordSheet } from './render/coord.ts';
 import { renderCompareSheet } from './render/compare.ts';
 import { renderDicteeSheet } from './render/dictee.ts';
+import { renderIdentitySheet } from './render/identity.ts';
+import { renderScrambleSheet } from './render/scramble.ts';
 import type { Subject } from './render/frame.ts';
 
 export interface RenderedSheet {
@@ -44,12 +51,51 @@ export const EXERCISES: readonly ExerciseDefinition[] = [
     },
   },
   {
+    id: 'mystery',
+    label: 'Manche mystère (dégâts cachés)',
+    subject: 'Mathématiques',
+    render: (level, period, seed, options) => {
+      const ex = generateMystery({ level, period, seed, pokedex: POKEDEX });
+      return {
+        sheet: renderMysterySheet(ex.combat, { ...options, answerKey: false, hiddenRounds: ex.hiddenRounds }),
+        answerKey: renderMysterySheet(ex.combat, { answerKey: true, hiddenRounds: ex.hiddenRounds }),
+      };
+    },
+  },
+  {
+    id: 'coord',
+    label: 'Grille à coordonnées',
+    subject: 'Mathématiques',
+    render: (level, period, seed, options) => {
+      const ex = generateCoord({ level, period, seed, pokedex: POKEDEX });
+      return { sheet: renderCoordSheet(ex, { ...options, answerKey: false }), answerKey: renderCoordSheet(ex, { answerKey: true }) };
+    },
+  },
+  {
     id: 'dictee',
     label: 'Dictée à trous',
     subject: 'Français',
     render: (level, period, seed, options) => {
       const ex = generateDictee({ level, period, seed, pokedex: POKEDEX });
       return { sheet: renderDicteeSheet(ex, { ...options, answerKey: false }), answerKey: renderDicteeSheet(ex, { answerKey: true }) };
+    },
+  },
+  {
+    id: 'identity',
+    label: "Fiche d'identité (lecture)",
+    subject: 'Français',
+    render: (level, period, seed, options) => {
+      const ex = generateIdentity({ level, period, seed, pokedex: POKEDEX });
+      return { sheet: renderIdentitySheet(ex, { ...options, answerKey: false }), answerKey: renderIdentitySheet(ex, { answerKey: true }) };
+    },
+  },
+  {
+    id: 'scramble',
+    label: 'Phrase en désordre + copie',
+    subject: 'Français',
+    render: (level, period, seed, options) => {
+      const ex = generateScramble({ level, period, seed, pokedex: POKEDEX });
+      return { sheet: renderScrambleSheet(ex, { ...options, answerKey: false }), answerKey: renderScrambleSheet(ex, { answerKey: true }) };
     },
   },
 ];

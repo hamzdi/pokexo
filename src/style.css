@@ -24,9 +24,10 @@ body { margin: 0; }
 
 .rounds { width: 100%; border-collapse: collapse; font-size: var(--fs-body); --row-h: 10.5mm; }
 .sheet--cp .rounds { --row-h: 11.5mm; }
-.sheet--cp.sheet--combat { --sprite: 26mm; }
-.sheet--cp.sheet--combat .sheet__body { gap: 5mm; }
-.sheet--cp .rules { font-size: calc(var(--fs-body) * 0.7); line-height: 1.35; }
+.sheet--cp.sheet--combat, .sheet--cp.sheet--mystery { --sprite: 24mm; }
+.sheet--cp.sheet--combat .sheet__body, .sheet--cp.sheet--mystery .sheet__body { gap: 4.5mm; }
+.sheet--cp .rules { font-size: calc(var(--fs-body) * 0.68); line-height: 1.3; }
+.sheet--ce1.sheet--mystery { --sprite: 16mm; }
 .sheet--ce1 .rounds .box { height: 8mm; min-width: 18mm; }
 .sheet--ce1 .rules { font-size: calc(var(--fs-body) * 0.72); line-height: 1.35; }
 .sheet--ce1 .sheet__body { gap: 4mm; }
@@ -105,3 +106,50 @@ body { margin: 0; }
   .app-desk { gap: 0 !important; }
   .sheet:last-child { break-after: auto; page-break-after: auto; }
 }
+
+/* ---- Mystery variant ---- */
+.pv-plain { font-size: calc(var(--fs-body) * 1.1); font-variant-numeric: tabular-nums; }
+
+/* ---- Section titles inside a sheet ---- */
+.section-title { margin: 0; font-size: var(--fs-consigne); font-weight: 700; line-height: 1.3; }
+.sheet--ce1 .section-title { font-size: calc(var(--fs-consigne) * 0.95); }
+
+/* ---- Identity sheet ---- */
+.id-card__sprite { --sprite: 38mm; }
+.sheet--ce1 .id-card__sprite { --sprite: 30mm; }
+.id-table td { font-size: var(--fs-body); }
+.sheet--ce1 .id-table td { font-size: calc(var(--fs-body) * 0.95); }
+.evo { display: inline-flex; align-items: center; gap: 2mm; flex-wrap: wrap; }
+.statements { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4mm; }
+.statement { display: flex; align-items: center; justify-content: space-between; gap: 4mm; font-size: var(--fs-body); }
+.sheet--cp .statement { padding: 2mm 0; border-bottom: 1px dashed var(--px-line-strong); }
+.open-questions { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3mm; }
+.open-questions__text { margin: 0 0 1.5mm; font-size: var(--fs-body); font-weight: 700; }
+.seyes--answer { position: relative; }
+.seyes__answer { position: absolute; left: 3mm; bottom: calc(var(--step) * 1.1); font-size: calc(var(--fs-body) * 0.95); }
+
+/* ---- Scramble sheet ---- */
+.scramble, .copy { display: flex; flex-direction: column; gap: 3.5mm; }
+.tag-cut .pk-sprite--img { --sprite: 11mm; }
+.glue { height: 20mm; border: 2px solid var(--px-line-strong); border-radius: 3mm; padding: 2mm 3mm; font: 500 12px var(--font-ui); color: var(--px-ink-2); }
+.sheet--ce1 .glue { height: 16mm; }
+.glue--key { height: auto; border-color: var(--px-answer); font-size: var(--fs-body); margin: 0; font-family: var(--font-sheet); }
+.seyes-block__label { font: 600 11px var(--font-ui); color: var(--px-ink-2); align-items: center; }
+.seyes-block__margin .pk-sprite--img { border-radius: 1mm; }
+.seyes__model .pk-sprite--img { display: inline-block; vertical-align: -1mm; --sprite: calc(var(--step) * 3.6); border-radius: 1mm; }
+.seyes__model--key { color: var(--px-answer); }
+
+/* ---- Coord sheet ---- */
+.coord-layout { display: flex; align-items: flex-start; gap: 10mm; }
+.sheet--cp .coord td { width: 18mm; height: 18mm; }
+.sheet--cp .coord td .pk-sprite { --sprite: 14mm; }
+.coord td { position: relative; }
+.coord__cross { position: absolute; inset: 0; display: grid; place-items: center; font-size: 28px; text-decoration: none; }
+.coord-list { list-style: none; margin: 6mm 0 0; padding: 0; display: flex; flex-direction: column; gap: 5mm; font-size: var(--fs-body); flex: 1; }
+.coord-list li { display: flex; align-items: center; gap: 3mm; }
+.coord-list li > span:nth-child(2) { flex: 1; }
+.coord-list__example { color: var(--px-ink-2); }
+.coord-list__example b { color: var(--px-ink); display: inline-block; min-width: 16mm; text-align: center; }
+.coord-list .answer-line { min-width: 18mm; }
+.coord-list .answer { display: inline-block; min-width: 16mm; text-align: center; }
+.coord-list li > span:last-child { white-space: nowrap; }

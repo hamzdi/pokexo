@@ -44,3 +44,12 @@ Les cartes listent deux attaques et leurs dégâts ; chaque manche réutilise l'
 
 ## 2026-10-13 — Graines par exercice
 Chaque générateur dérive sa graine de `"<exercice>:<numéro>"`, donc un même numéro de fiche produit des contenus différents selon l'exercice tout en restant reproductible.
+
+## 2026-10-13 — Manche mystère = variante de rendu du combat
+Même générateur, graine dérivée pour obtenir un autre combat ; seuls les dégâts des manches ×1 choisies sont cachés, les PV restants sont imprimés. Évite un second moteur de combat.
+
+## 2026-10-13 — Fiche d'identité : vrai/faux en CP, questions ouvertes en CE1
+Les énoncés faux sont construits à partir d'un autre Pokémon (type, catégorie, évolution) ou d'une taille décalée, pour rester plausibles. Poids arrondi au kilo entier (pas de décimaux avant le CE2).
+
+## 2026-10-13 — Phrase en désordre : le nom du Pokémon est une étiquette, jamais écrit
+L'étiquette porte le sprite et le nom imprimé ; dans la copie en cursive, le nom est remplacé par le sprite en marge et dans le modèle.
