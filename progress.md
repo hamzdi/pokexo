@@ -21,3 +21,4 @@
 - Itération 9 (branche `feat/generations-1-4`) : bundle étendu aux générations 1 à 4 (493 Pokémon, 35 légendaires, page de 5,4 Mo), champ génération, filtre « Générations » dans le bloc Pokémon. 46 tests verts.
 - PR #8 fusionnée (générations 1 à 4, filtre par génération), Pages redéployé.
 - Itération 10 (branche `feat/more-exercises-2`) : cinq exercices du brief ajoutés — équipes (addition des PV), taille et poids à ranger (dès CP P3), suites du Pokédex, boutique en euros (dès CP P4), relier image et mot — avec disponibilité par niveau/période grisée dans l'interface. Onglet Coloriage : recherche d'un Pokémon, page A4 avec contour noir et blanc généré dans le navigateur et petit modèle en couleur. 52 tests verts ; balayage de 1 380 fiches sans débordement.
+- PR #9 fusionnée (cinq exercices supplémentaires, onglet Coloriage), Pages redéployé et vérifié en ligne.
